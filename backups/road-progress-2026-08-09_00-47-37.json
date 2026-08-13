@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "activeProjectId": "project_main",
+  "projects": [
+    {
+      "id": "project_main",
+      "name": "Основной объект",
+      "state": {
+        "total": 358.79,
+        "layers": [
+          {
+            "id": "shma",
+            "name": "ЩМА",
+            "color": "#D71921",
+            "segments": [
+              {
+                "s": 0,
+                "e": 100,
+                "status": "Выполнено",
+                "responsible": "",
+                "quality": "",
+                "date": "09.08.2026"
+              }
+            ]
+          },
+          {
+            "id": "kz",
+            "name": "К/З",
+            "color": "#E8934A",
+            "segments": [
+              {
+                "s": 0,
+                "e": 100,
+                "status": "Выполнено",
+                "responsible": "",
+                "quality": "",
+                "date": "09.08.2026"
+              }
+            ]
+          },
+          {
+            "id": "oms",
+            "name": "ОМС",
+            "color": "#4A9EDB",
+            "segments": []
+          },
+          {
+            "id": "nso",
+            "name": "НСО 40-70",
+            "color": "#B98CDB",
+            "segments": [
+              {
+                "s": 0,
+                "e": 50
+              },
+              {
+                "s": 167,
+                "e": 275.7
+              },
+              {
+                "s": 278,
+                "e": 322
+              },
+              {
+                "s": 324,
+                "e": 358.79
+              }
+            ]
+          },
+          {
+            "id": "dso",
+            "name": "ДСО",
+            "color": "#D9C548",
+            "segments": [
+              {
+                "s": 0,
+                "e": 50
+              },
+              {
+                "s": 167,
+                "e": 275.7
+              },
+              {
+                "s": 278,
+                "e": 322
+              },
+              {
+                "s": 324,
+                "e": 358.79
+              }
+            ]
+          },
+          {
+            "id": "zmp",
+            "name": "ЗМП",
+            "color": "#7A828C",
+            "segments": [
+              {
+                "s": 0,
+                "e": 50
+              },
+              {
+                "s": 162,
+                "e": 275.7
+              },
+              {
+                "s": 278,
+                "e": 322
+              },
+              {
+                "s": 324,
+                "e": 358.79
+              }
+            ]
+          }
+        ],
+        "bridge": {
+          "start": 275.78,
+          "end": 277.92,
+          "layers": [
+            {
+              "id": "bridge_shma",
+              "name": "ЩМА",
+              "color": "#D71921",
+              "segments": []
+            },
+            {
+              "id": "bridge_mz",
+              "name": "М/З",
+              "color": "#E8934A",
+              "segments": []
+            }
+          ]
+        }
+      },
+      "journal": [
+        {
+          "date": "09.08.2026, 00:47:29",
+          "action": "Добавлен участок слоя",
+          "detail": "К/З"
+        },
+        {
+          "date": "09.08.2026, 00:47:24",
+          "action": "Добавлен участок слоя",
+          "detail": "ЩМА"
+        }
+      ]
+    }
+  ]
+}

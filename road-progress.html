@@ -1,0 +1,2424 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Прогресс укладки слоёв</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%2315171a'/%3E%3Crect x='4' y='14' width='24' height='4' fill='%23D71921'/%3E%3Crect x='4' y='14' width='14' height='4' fill='%236BC48C'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+
+        --font-display: "Inter", sans-serif;
+        --font-body: "Inter", sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 24px;
+        --space-6: 32px;
+        --space-7: 48px;
+        --space-8: 64px;
+        --layout-max-width: 1240px;
+        --layout-page-pad-x: clamp(16px, 3vw, 32px);
+        --layout-page-pad-y: clamp(20px, 3vw, 32px);
+        --layout-section-gap: 20px;
+        --layout-card-padding: 18px;
+        --layout-card-padding-lg: 22px;
+        --layout-command-gap: 14px;
+        --layout-command-surface: rgba(255, 255, 255, 0.02);
+        --layout-ribbon-label: 240px;
+        --ribbon-height: 30px;
+        --ribbon-track-height: 30px;
+        --ribbon-track-surface: rgba(255, 255, 255, 0.025);
+        --ribbon-track-grid: rgba(255, 255, 255, 0.075);
+        --ribbon-tick: #424954;
+        --ribbon-tick-major: #77808b;
+        --summary-accent-surface: rgba(215, 25, 33, 0.08);
+        --summary-row-surface: rgba(255, 255, 255, 0.018);
+        --form-control-height: 32px;
+        --form-control-surface: var(--color-surface-2);
+        --form-control-hover: var(--color-surface-raised);
+        --form-control-placeholder: var(--color-text-faint);
+        --form-invalid-border: var(--color-danger);
+        --form-invalid-surface: rgba(215, 25, 33, 0.08);
+        --state-loading: var(--color-focus);
+        --state-empty-surface: rgba(255, 255, 255, 0.018);
+        --focus-ring: 0 0 0 3px var(--color-focus-soft);
+        --pdf-accent: #b3131b;
+        --pdf-track-surface: #f2f3f4;
+
+        --radius-1: 3px;
+        --radius-2: 5px;
+        --radius-3: 10px;
+        --radius-pill: 999px;
+
+        --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.14);
+        --shadow-2: 0 8px 20px rgba(0, 0, 0, 0.18);
+        --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+
+        --color-bg: #15171a;
+        --color-surface: #1c1f24;
+        --color-surface-2: #22262c;
+        --color-surface-raised: #262b31;
+        --color-surface-inset: #191c21;
+        --color-border: #2e333b;
+        --color-border-strong: #3a4049;
+        --color-text: #e9e7e2;
+        --color-text-muted: #9198a1;
+        --color-text-faint: #5c636c;
+        --color-accent: #d71921;
+        --color-accent-strong: #c11119;
+        --color-success: #6bc48c;
+        --color-warning: #e8934a;
+        --color-danger: #d71921;
+        --color-focus: #8fb9ff;
+        --color-focus-soft: rgba(143, 185, 255, 0.18);
+        --color-danger-soft: rgba(215, 25, 33, 0.09);
+        --color-success-soft: rgba(107, 196, 140, 0.12);
+        --color-paper: #ffffff;
+        --color-ink: #111111;
+        --color-report-paper: #ffffff;
+        --color-report-ink: #111111;
+        --color-report-muted: #555555;
+        --color-report-faint: #666666;
+        --color-report-border: #cccccc;
+        --color-report-surface: #f7f7f7;
+        --color-report-surface-strong: #f3f3f3;
+        --color-report-ruler: #888888;
+        --color-report-track-border: #bbbbbb;
+
+        --bg: var(--color-bg);
+        --surface: var(--color-surface);
+        --surface2: var(--color-surface-2);
+        --line: var(--color-border);
+        --line-strong: var(--color-border-strong);
+        --red: var(--color-accent);
+        --text: var(--color-text);
+        --text-dim: var(--color-text-muted);
+        --text-faint: var(--color-text-faint);
+        --mono: var(--font-mono);
+        --sans: var(--font-body);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
+        box-shadow: 0 0 0 3px var(--color-focus-soft);
+      }
+      #road-app {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        padding: var(--layout-page-pad-y) var(--layout-page-pad-x) 60px;
+        min-height: 100vh;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 24px 24px;
+        background-position: -1px -1px;
+      }
+      .wrap {
+        max-width: var(--layout-max-width);
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--layout-section-gap);
+      }
+
+      .wrap > * {
+        min-width: 0;
+      }
+
+      /* header */
+      .hdr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, max-content);
+        align-items: center;
+        gap: var(--layout-command-gap);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-3);
+        box-shadow: var(--shadow-1);
+        padding: var(--layout-card-padding-lg);
+        margin: 0;
+      }
+      .hdr > div:first-child {
+        min-width: 0;
+      }
+      .hdr > div:last-child {
+        justify-self: end;
+        text-align: right;
+      }
+      .hdr .eyebrow {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        color: var(--color-accent);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .hdr h1 {
+        font-size: clamp(22px, 2.3vw, 28px);
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.01em;
+        font-family: var(--font-display);
+      }
+      .hdr .meta {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text-dim);
+        text-align: right;
+        display: grid;
+        gap: 8px;
+      }
+      .hdr .meta b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .len-edit {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin-top: 0;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+      .len-edit input {
+        width: 80px;
+        background: var(--surface2);
+        border: 1px solid var(--line-strong);
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 12px;
+        padding: 4px 6px;
+        border-radius: var(--radius-1);
+        text-align: right;
+      }
+      .len-edit span {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-faint);
+      }
+
+      /* ruler */
+      .ruler-block {
+        margin: 2px 0 0;
+        padding: 0 2px 6px;
+        border-bottom: 1px solid var(--line);
+      }
+      .ruler {
+        position: relative;
+        height: var(--ribbon-height);
+        margin-left: var(--layout-ribbon-label);
+        border-bottom: 1px solid var(--ribbon-tick-major);
+        background: linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent calc(100% - 1px),
+          rgba(255, 255, 255, 0.035) calc(100% - 1px)
+        );
+      }
+      .tick {
+        position: absolute;
+        bottom: 0;
+        width: 1px;
+        background: var(--ribbon-tick);
+      }
+      .tick.major {
+        background: var(--ribbon-tick-major);
+      }
+      .tick-label {
+        position: absolute;
+        bottom: 8px;
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        color: var(--text-dim);
+        transform: translateX(-50%);
+        white-space: nowrap;
+      }
+      .tick-label.end {
+        transform: translateX(-100%);
+        color: var(--text);
+      }
+
+      /* layer rows */
+      .layer {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin-bottom: 5px;
+      }
+      .layer-label {
+        width: var(--layout-ribbon-label);
+        flex: 0 0 var(--layout-ribbon-label);
+        padding: 5px 14px 5px 4px;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        cursor: pointer;
+        border-radius: var(--radius-1);
+        transition: background-color 0.12s ease;
+      }
+      .layer-label:hover {
+        background: var(--ribbon-track-surface);
+      }
+      .swatch {
+        width: 8px;
+        height: 28px;
+        border-radius: var(--radius-1);
+        flex: 0 0 8px;
+        margin-top: 0;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+      }
+      .layer-text {
+        min-width: 0;
+        flex: 1;
+      }
+      .layer-name {
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        line-height: 1.2;
+      }
+      .layer-stats {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--text-dim);
+        margin-top: 4px;
+        line-height: 1.4;
+      }
+      .layer-stats b {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .track-col {
+        flex: 1;
+      }
+      .track {
+        position: relative;
+        height: var(--ribbon-track-height);
+        background-color: var(--ribbon-track-surface);
+        background-image: linear-gradient(
+          90deg,
+          transparent calc(100% - 1px),
+          var(--ribbon-track-grid) 100%
+        );
+        background-size: 10% 100%;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-2);
+        overflow: hidden;
+        box-shadow: var(--shadow-inset);
+      }
+      .seg {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        opacity: 0.88;
+        cursor: pointer;
+        transition: opacity 0.12s;
+      }
+      .seg:hover {
+        opacity: 1;
+      }
+      .seg.editing-hover {
+        outline: 1px solid var(--color-focus-soft);
+      }
+      .gridline {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: var(--ribbon-track-grid);
+      }
+
+      /* expanded editor */
+      .editor {
+        margin: 6px 0 16px var(--layout-ribbon-label);
+        background: var(--color-surface-inset);
+        border: 1px solid var(--line-strong);
+        border-left: 3px solid var(--color-accent);
+        border-radius: var(--radius-2);
+        padding: 12px 14px 10px;
+        display: none;
+        box-shadow: var(--shadow-inset);
+      }
+      .editor.open {
+        display: block;
+      }
+      .seg-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 34px;
+        margin-bottom: 0;
+        padding: 5px 0;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text-dim);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+      }
+      .editor > .seg-row:first-child {
+        margin: -2px 0 5px;
+        padding: 3px 0 9px;
+        color: var(--text);
+        border-bottom-color: var(--line-strong);
+      }
+      .editor > .seg-row:not(:first-child) {
+        color: var(--text-dim);
+      }
+      .editor > .seg-row:last-of-type {
+        border-bottom: none;
+      }
+      .seg-row input {
+        width: 78px;
+        min-height: 28px;
+        background: var(--surface2);
+        border: 1px solid var(--line-strong);
+        color: var(--text);
+        padding: 5px 8px;
+        border-radius: var(--radius-2);
+        font-family: var(--mono);
+        font-size: 12px;
+        transition: border-color 0.12s ease, background-color 0.12s ease;
+      }
+      .seg-row input:hover {
+        background: var(--color-surface-raised);
+        border-color: var(--text-dim);
+      }
+      .seg-row input:focus {
+        outline: 1px solid var(--color-focus);
+        outline-offset: 1px;
+        border-color: var(--color-accent);
+      }
+      .seg-row input.invalid,
+      .new-layer-row input.invalid,
+      .control-panel input.invalid {
+        border-color: var(--red);
+        box-shadow: 0 0 0 1px rgba(215, 25, 33, 0.2) inset;
+      }
+      .seg-row .arrow {
+        color: var(--color-accent);
+        font-weight: 700;
+      }
+      .seg-row .len {
+        color: var(--text-dim);
+        min-width: 64px;
+        font-size: 11px;
+      }
+      .del-btn {
+        background: none;
+        border: none;
+        color: var(--text-faint);
+        cursor: pointer;
+        font-size: 14px;
+        padding: 5px 7px;
+        border-radius: var(--radius-1);
+        line-height: 1;
+        margin-left: auto;
+      }
+      .del-btn:hover {
+        color: var(--red);
+        background: var(--color-danger-soft);
+      }
+      .add-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin: 8px -4px 0;
+        padding: 10px 4px 0;
+        border-top: 1px dashed var(--line-strong);
+        flex-wrap: wrap;
+      }
+      .add-row input {
+        min-height: 28px;
+        background: var(--surface2);
+        border: 1px solid var(--line-strong);
+        color: var(--text);
+        padding: 5px 8px;
+        border-radius: var(--radius-2);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .add-row input:hover {
+        border-color: var(--text-dim);
+      }
+      .add-btn {
+        background: var(--red);
+        color: var(--color-paper);
+        border: none;
+        padding: 7px 12px;
+        border-radius: var(--radius-2);
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        letter-spacing: 0.02em;
+        transition: background-color 0.12s ease, transform 0.12s ease;
+      }
+      .add-btn:hover {
+        background: var(--color-accent-strong);
+        transform: translateY(-1px);
+      }
+      .add-btn:disabled {
+        background: var(--line-strong);
+        cursor: not-allowed;
+      }
+
+      /* toolbar */
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0;
+        padding: 14px 16px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-3);
+        box-shadow: var(--shadow-1);
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .small-btn {
+        background: var(--surface2);
+        border: 1px solid var(--line-strong);
+        color: var(--text-dim);
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 7px 13px;
+        border-radius: var(--radius-2);
+        cursor: pointer;
+      }
+      .small-btn:hover {
+        color: var(--text);
+        border-color: var(--text-dim);
+      }
+      .status {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-faint);
+      }
+      .status.saved {
+        color: var(--color-success);
+      }
+
+      .new-layer-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 0;
+        align-items: center;
+        padding: 14px 16px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-3);
+        box-shadow: var(--shadow-1);
+        flex-wrap: wrap;
+      }
+      .new-layer-row input {
+        background: var(--surface2);
+        border: 1px solid var(--line-strong);
+        color: var(--text);
+        padding: 6px 8px;
+        border-radius: var(--radius-1);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .new-layer-row input[type="color"] {
+        width: 34px;
+        height: 30px;
+        padding: 2px;
+      }
+      .new-layer-row input[type="text"] {
+        width: 160px;
+      }
+
+      .summary-total {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-dim);
+        margin-top: 0;
+        padding: var(--layout-card-padding-lg);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-3);
+        box-shadow: var(--shadow-1);
+      }
+      .summary-total b {
+        color: var(--text);
+      }
+      .summary-hdr {
+        color: var(--text);
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 13px;
+        letter-spacing: 0.01em;
+      }
+      .summary-meta {
+        margin-bottom: 4px;
+        line-height: 1.6;
+      }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: baseline;
+        padding: 8px 10px;
+        background: var(--summary-row-surface);
+        border: 1px solid rgba(255, 255, 255, 0.045);
+        border-radius: var(--radius-1);
+        line-height: 1.45;
+      }
+      .summary-name {
+        color: var(--text);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .summary-overall {
+        margin-top: 12px;
+        padding: 11px 12px;
+        background: var(--summary-accent-surface);
+        border: 1px solid rgba(215, 25, 33, 0.2);
+        border-left: 3px solid var(--color-accent);
+        border-radius: var(--radius-1);
+        color: var(--text);
+      }
+      .hint-line {
+        margin-top: 6px;
+        color: var(--text-faint);
+        font-size: 10px;
+        font-family: var(--mono);
+      }
+      .toolbar-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      #journalPanel {
+        background: var(--color-surface-inset);
+      }
+      #journalPanel .summary-hdr {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      #journalPanel .summary-hdr::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: var(--radius-pill);
+        background: var(--color-success);
+        box-shadow: 0 0 0 3px var(--color-success-soft);
+      }
+      #journalPanel .summary-row {
+        display: grid;
+        grid-template-columns: minmax(125px, max-content) minmax(0, 1fr);
+      }
+      #journalPanel .summary-row > span:first-child {
+        color: var(--text-faint);
+        white-space: nowrap;
+      }
+      #journalPanel .summary-row > span:last-child {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      #bridgeSection {
+        background: linear-gradient(
+          135deg,
+          var(--surface) 0%,
+          var(--color-surface-raised) 100%
+        );
+      }
+      #bridgeSection .section-hdr {
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      #bridgeSection .section-hdr .eyebrow {
+        color: var(--color-warning);
+      }
+      #bridgeSection .summary-total {
+        background: rgba(0, 0, 0, 0.12);
+        box-shadow: var(--shadow-inset);
+      }
+      #bridgeSection .summary-total[style] {
+        margin-top: 18px !important;
+      }
+
+      .pdf-report {
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        width: 794px;
+        background: var(--color-report-paper);
+        color: var(--color-report-ink);
+        font-family: var(--font-body);
+        padding: 36px 40px;
+        font-size: 12px;
+        line-height: 1.45;
+        z-index: -1;
+      }
+      .pdf-report h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+        color: var(--color-report-ink);
+      }
+      .pdf-report .pdf-sub {
+        color: var(--color-report-muted);
+        font-size: 11px;
+        margin-bottom: 18px;
+      }
+      .pdf-report .pdf-chart {
+        margin: 16px 0 20px;
+      }
+      .pdf-report .pdf-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+      .pdf-report .pdf-label {
+        width: 130px;
+        font-size: 10px;
+        padding-right: 8px;
+        line-height: 1.35;
+      }
+      .pdf-report .pdf-track-wrap {
+        flex: 1;
+      }
+      .pdf-report .pdf-track {
+        position: relative;
+        height: 22px;
+        border: 1px solid var(--color-report-track-border);
+        background: var(--color-report-surface);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .pdf-report .pdf-seg {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+      }
+      .pdf-report .pdf-ruler {
+        position: relative;
+        height: 22px;
+        margin-left: 130px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid var(--color-report-ruler);
+      }
+      .pdf-report .pdf-tick {
+        position: absolute;
+        bottom: 0;
+        width: 1px;
+        background: var(--color-report-ruler);
+      }
+      .pdf-report .pdf-tick-label {
+        position: absolute;
+        bottom: 4px;
+        font-size: 8px;
+        color: var(--color-report-faint);
+        transform: translateX(-50%);
+      }
+      .pdf-report .pdf-tick-label.end {
+        transform: translateX(-100%);
+      }
+      .pdf-report table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        font-size: 11px;
+      }
+      .pdf-report th,
+      .pdf-report td {
+        border: 1px solid var(--color-report-border);
+        padding: 7px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .pdf-report th {
+        background: var(--color-report-surface-strong);
+        font-weight: 700;
+      }
+      .pdf-report .pdf-foot {
+        margin-top: 16px;
+        font-size: 10px;
+        color: var(--color-report-faint);
+      }
+      .small-btn:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+
+      ::placeholder {
+        color: var(--form-control-placeholder);
+      }
+
+      .control-panel select,
+      .control-panel input,
+      .new-layer-row input,
+      .seg-row input,
+      .add-row input {
+        min-height: var(--form-control-height);
+        background: var(--form-control-surface);
+        border: 1px solid var(--line-strong);
+        color: var(--text);
+        border-radius: var(--radius-2);
+        transition: background-color 0.12s ease, border-color 0.12s ease,
+          box-shadow 0.12s ease;
+      }
+      .control-panel select:hover,
+      .control-panel input:hover,
+      .new-layer-row input:hover,
+      .seg-row input:hover,
+      .add-row input:hover {
+        background: var(--form-control-hover);
+        border-color: var(--text-dim);
+      }
+      .control-panel select:focus,
+      .control-panel input:focus,
+      .new-layer-row input:focus,
+      .seg-row input:focus,
+      .add-row input:focus {
+        border-color: var(--color-focus);
+        box-shadow: 0 0 0 3px var(--color-focus-soft);
+      }
+      .control-panel input[type="number"],
+      .seg-row input[type="number"],
+      .add-row input[type="number"] {
+        font-variant-numeric: tabular-nums;
+      }
+      .control-panel input[type="number"] {
+        text-align: right;
+      }
+      .control-panel input.invalid,
+      .new-layer-row input.invalid,
+      .seg-row input.invalid,
+      .add-row input.invalid {
+        border-color: var(--form-invalid-border);
+        background: var(--form-invalid-surface);
+        box-shadow: 0 0 0 3px var(--color-danger-soft);
+      }
+      .control-panel input.invalid:focus,
+      .new-layer-row input.invalid:focus,
+      .seg-row input.invalid:focus,
+      .add-row input.invalid:focus {
+        border-color: var(--form-invalid-border);
+        box-shadow: 0 0 0 3px var(--color-danger-soft);
+      }
+
+      .section-block {
+        margin-top: 0;
+        padding: var(--layout-card-padding-lg);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-3);
+        box-shadow: var(--shadow-1);
+      }
+      .section-block .section-hdr {
+        margin-bottom: 18px;
+      }
+      .section-block .section-hdr .eyebrow {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        color: var(--red);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .section-block .section-hdr h2 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 6px;
+        letter-spacing: -0.01em;
+      }
+      .section-block .section-hdr .meta {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+      .section-block .section-hdr .meta b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .control-panel {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 12px 16px;
+        margin: 0;
+        padding: 14px 16px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-3);
+        box-shadow: var(--shadow-1);
+        font: 11px var(--mono);
+        color: var(--text-dim);
+      }
+      .control-panel > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        min-width: 0;
+      }
+      .control-panel > div:last-child {
+        justify-content: flex-end;
+      }
+      .control-panel label { margin-right: 0; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .control-panel select, .control-panel input { background:var(--form-control-surface); color:var(--text); border:1px solid var(--line-strong); border-radius:var(--radius-2); padding:6px 8px; min-height:var(--form-control-height); font:11px var(--mono); }
+      .layer.hidden { display:none; }
+      .layer.focused .track { outline:2px solid var(--color-focus); outline-offset: 2px; }
+
+      /* light theme removed */
+      /*
+      #road-app[data-theme="light"] {
+        color-scheme: light;
+        --color-bg: #f1f4f6;
+        --color-surface: #ffffff;
+        --color-surface-2: #edf1f4;
+        --color-surface-raised: #ffffff;
+        --color-surface-inset: #e7edf1;
+        --color-border: #d6dee5;
+        --color-border-strong: #b7c3cd;
+        --color-text: #18232d;
+        --color-text-muted: #5d6c78;
+        --color-text-faint: #8996a1;
+        --color-accent: #b3131b;
+        --color-accent-strong: #941018;
+        --color-success: #2e8a5c;
+        --color-warning: #b06a18;
+        --color-danger: #b3131b;
+        --color-focus: #245dcc;
+        --color-focus-soft: rgba(36, 93, 204, 0.18);
+        --color-danger-soft: rgba(179, 19, 27, 0.1);
+        --color-success-soft: rgba(46, 138, 92, 0.12);
+        --shadow-1: 0 1px 2px rgba(27, 45, 60, 0.08);
+        --shadow-2: 0 10px 24px rgba(27, 45, 60, 0.12);
+        --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+        --layout-command-surface: rgba(23, 35, 45, 0.025);
+        --ribbon-track-surface: rgba(23, 35, 45, 0.035);
+        --ribbon-track-grid: rgba(23, 35, 45, 0.1);
+        --ribbon-tick: #a6b2bc;
+        --ribbon-tick-major: #6e7d89;
+        --summary-accent-surface: rgba(179, 19, 27, 0.07);
+        --summary-row-surface: rgba(23, 35, 45, 0.035);
+        --state-empty-surface: rgba(23, 35, 45, 0.035);
+        --form-control-surface: #edf1f4;
+        --form-control-hover: #ffffff;
+        background: var(--color-bg);
+        background-image:
+          linear-gradient(var(--color-border) 1px, transparent 1px),
+          linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+      }
+      #road-app[data-theme="light"] .track {
+        background-image: linear-gradient(
+          90deg,
+          transparent calc(100% - 1px),
+          var(--ribbon-track-grid) 100%
+        );
+      }
+      #road-app[data-theme="light"] .editor {
+        background: var(--color-surface-inset);
+      }
+      #road-app[data-theme="light"] .seg {
+        opacity: 0.92;
+      }
+      #road-app[data-theme="light"] .add-btn:disabled {
+        color: var(--text-dim);
+        background: var(--color-surface-inset);
+        border: 1px solid var(--line);
+      }
+      #road-app[data-theme="light"] .summary-row,
+      #road-app[data-theme="light"] .seg-row {
+        border-color: rgba(23, 35, 45, 0.12);
+      }
+      #road-app[data-theme="light"] .swatch {
+        box-shadow: 0 0 0 1px rgba(23, 35, 45, 0.16);
+      }
+      #road-app[data-theme="light"] .layer-name {
+        color: var(--color-text);
+      }
+      #road-app[data-theme="light"] .layer-stats {
+        color: var(--color-text-muted);
+      }
+      #road-app[data-theme="light"] .layer-stats b {
+        color: var(--color-text);
+      }
+
+      */
+      /* states, accessibility, and export surfaces */
+      .status {
+        min-height: 22px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 8px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-pill);
+        background: var(--state-empty-surface);
+      }
+      .status.saved {
+        background: var(--color-success-soft);
+        border-color: rgba(107, 196, 140, 0.2);
+      }
+      .status.saved::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: var(--radius-pill);
+        background: var(--color-success);
+      }
+      .toolbar button:disabled,
+      .small-btn:disabled,
+      .add-btn:disabled {
+        border-color: var(--line);
+        background: var(--color-surface-inset);
+      }
+      .summary-total:empty,
+      .section-block:empty {
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--state-empty-surface);
+        color: var(--text-faint);
+      }
+      .summary-total:empty::before {
+        content: "Сводка появится после загрузки данных";
+      }
+      .section-block:empty::before {
+        content: "Загрузка участка моста…";
+        font: 11px var(--mono);
+      }
+
+      .layer-label:focus-visible,
+      .track:focus-visible,
+      .small-btn:focus-visible,
+      .add-btn:focus-visible,
+      .del-btn:focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
+        box-shadow: var(--focus-ring);
+      }
+      .small-btn,
+      .add-btn,
+      .del-btn,
+      .layer-label,
+      .track {
+        -webkit-tap-highlight-color: transparent;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+
+      /* responsive layout */
+      @media (max-width: 900px) {
+        :root {
+          --layout-ribbon-label: 190px;
+          --layout-card-padding-lg: 18px;
+        }
+        #road-app {
+          padding-right: 18px;
+          padding-left: 18px;
+        }
+        .hdr {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        .hdr .meta {
+          justify-self: start;
+          text-align: left;
+        }
+        .control-panel {
+          grid-template-columns: 1fr;
+        }
+        .control-panel > div:last-child {
+          justify-content: flex-start;
+        }
+      }
+      @media (max-width: 680px) {
+        :root {
+          --layout-ribbon-label: 0px;
+          --ribbon-height: 28px;
+          --ribbon-track-height: 32px;
+          --layout-card-padding: 14px;
+          --layout-card-padding-lg: 16px;
+        }
+        #road-app {
+          padding: 14px 12px 40px;
+          background-size: 20px 20px;
+        }
+        .wrap {
+          gap: 14px;
+        }
+        .hdr h1 {
+          font-size: 22px;
+        }
+        .hdr .meta {
+          font-size: 10px;
+        }
+        .control-panel,
+        .toolbar,
+        .new-layer-row {
+          padding: 12px;
+        }
+        .control-panel label {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .control-panel select,
+        .control-panel input {
+          max-width: 100%;
+        }
+        .ruler {
+          margin-left: 0;
+        }
+        .tick-label {
+          font-size: 9px;
+        }
+        .layer {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 5px;
+          margin-bottom: 10px;
+        }
+        .layer-label {
+          width: 100%;
+          flex-basis: auto;
+          padding: 4px 6px;
+        }
+        .swatch {
+          height: 24px;
+        }
+        .editor {
+          margin: 4px 0 14px;
+          padding: 10px;
+        }
+        .seg-row {
+          flex-wrap: wrap;
+        }
+        .seg-row .len {
+          flex-basis: 100%;
+          padding-left: 2px;
+        }
+        .add-row {
+          margin-right: 0;
+          margin-left: 0;
+        }
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+        #journalPanel .summary-row {
+          grid-template-columns: 1fr;
+          gap: 3px;
+        }
+        .section-block .section-hdr .meta {
+          font-size: 10px;
+          line-height: 1.65;
+        }
+      }
+      @media (max-width: 420px) {
+        .toolbar-actions {
+          width: 100%;
+        }
+        .toolbar-actions .small-btn {
+          flex: 1 1 100%;
+        }
+        .new-layer-row > * {
+          max-width: 100%;
+        }
+        .new-layer-row input[type="text"] {
+          width: 100%;
+        }
+        .add-row .del-btn {
+          margin-left: 0 !important;
+        }
+      }
+
+      /* PDF report visual system */
+      .pdf-report {
+        border-top: 8px solid var(--pdf-accent);
+        padding-top: 30px;
+      }
+      .pdf-report h1 {
+        letter-spacing: -0.02em;
+      }
+      .pdf-report .pdf-sub {
+        border-bottom: 1px solid var(--color-report-border);
+        padding-bottom: 12px;
+      }
+      .pdf-report .pdf-chart {
+        padding: 12px;
+        background: var(--color-report-surface);
+        border: 1px solid var(--color-report-border);
+      }
+      .pdf-report .pdf-track {
+        background: var(--pdf-track-surface);
+        border-color: var(--color-report-track-border);
+      }
+      .pdf-report table th {
+        background: var(--color-report-surface-strong);
+        color: var(--color-report-ink);
+        border-bottom: 2px solid var(--pdf-accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="road-app">
+      <div class="wrap">
+        <div class="hdr">
+          <div>
+            <div class="eyebrow">Дорожная одежда · Пикетаж</div>
+            <h1>Прогресс укладки слоёв</h1>
+          </div>
+          <div class="meta">
+            <div>Общая протяжённость: <b id="totalDisplay">—</b></div>
+            <div class="len-edit">
+              <span>ПК до</span>
+              <input type="number" id="totalInput" step="0.01" min="0.01" />
+              <span>(1 ПК = 100 м)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-panel">
+          <div><label>Объект <select id="projectSelect"></select></label> <button class="small-btn" id="addProjectBtn">+ объект</button> <button class="small-btn" id="renameProjectBtn">переименовать</button></div>
+          <div><label>Фильтр <select id="layerFilter"><option value="all">все слои</option><option value="incomplete">незавершённые</option><option value="behind">отстающие от плана</option></select></label> <label>Найти ПК <input id="pkSearch" type="number" step="0.01" placeholder="например 275,8"></label> <button class="small-btn" id="pkSearchBtn">найти</button></div>
+        </div>
+
+        <div class="ruler-block">
+          <div class="ruler" id="ruler"></div>
+        </div>
+
+        <div id="layers"></div>
+
+        <div class="new-layer-row">
+          <input
+            type="text"
+            id="newLayerName"
+            placeholder="название слоя (напр. ЩМА)"
+          />
+          <input type="color" id="newLayerColor" value="#6BC48C" />
+          <button class="add-btn" id="addLayerBtn">+ добавить слой</button>
+        </div>
+
+        <div class="summary-total" id="summaryTotal"></div>
+        <div class="summary-total" id="journalPanel"></div>
+
+        <div class="toolbar">
+          <div class="toolbar-actions">
+            <button class="small-btn" id="pdfBtn" title="Собрать печатный отчёт в PDF">Скачать отчёт PDF</button>
+            <button class="small-btn" id="wordBtn" title="Скачать Word-отчёт с таблицами и участками">Скачать отчёт Word</button>
+            <button class="small-btn" id="excelBtn" title="Выгрузить книгу Excel со сводкой и участками">Скачать Excel</button>
+            <button class="small-btn" id="importExcelBtn" title="Загрузить лист 'Участки' из Excel">Импорт Excel</button>
+            <input type="file" id="excelFile" accept=".xlsx" hidden />
+            <button class="small-btn" id="backupBtn" title="Создать резервную копию сейчас">Резервная копия</button>
+            <button class="small-btn" id="restoreBtn" title="Выбрать и восстановить одну из копий">Восстановить</button>
+          </div>
+          <span class="status" id="statusMsg">загрузка…</span>
+        </div>
+        <div class="hint-line">Подсказка: Enter в полях ПК и названия слоя добавляет быстрее; Ctrl+S сохраняет изменения вручную; клик по слою открывает его редактор.</div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+      (function () {
+        const DEFAULT_TOTAL = 358.79;
+        const BRIDGE_START = 275.78;
+        const BRIDGE_END = 277.92;
+        const BRIDGE_LEN_PK = BRIDGE_END - BRIDGE_START; // 2.14 ПК = 214 м
+        const DEFAULT_LAYERS = [
+          {
+            id: "shma",
+            name: "ЩМА",
+            color: "#D71921",
+            segments: [
+              { s: 194.5, e: 270.8 },
+              { s: 278, e: 319.7 },
+            ],
+          },
+          {
+            id: "kz",
+            name: "К/З",
+            color: "#E8934A",
+            segments: [
+              { s: 194.4, e: 273.8 },
+              { s: 278, e: 320.5 },
+              { s: 332.4, e: 358.79 },
+            ],
+          },
+          {
+            id: "oms",
+            name: "ОМС",
+            color: "#4A9EDB",
+            segments: [
+              { s: 0, e: 36 },
+              { s: 180.3, e: 275 },
+              { s: 278, e: 322 },
+              { s: 332.2, e: 358.79 },
+            ],
+          },
+          {
+            id: "rasklin",
+            name: "Расклин.",
+            color: "#6BC48C",
+            segments: [
+              { s: 0, e: 36 },
+              { s: 170, e: 275.7 },
+              { s: 278, e: 322 },
+              { s: 328, e: 358.79 },
+            ],
+          },
+          {
+            id: "nso",
+            name: "НСО 40-70",
+            color: "#B98CDB",
+            segments: [
+              { s: 0, e: 50 },
+              { s: 167, e: 275.7 },
+              { s: 278, e: 322 },
+              { s: 324, e: 358.79 },
+            ],
+          },
+          {
+            id: "dso",
+            name: "ДСО",
+            color: "#D9C548",
+            segments: [
+              { s: 0, e: 50 },
+              { s: 167, e: 275.7 },
+              { s: 278, e: 322 },
+              { s: 324, e: 358.79 },
+            ],
+          },
+          {
+            id: "zmp",
+            name: "ЗМП",
+            color: "#7A828C",
+            segments: [
+              { s: 0, e: 50 },
+              { s: 162, e: 275.7 },
+              { s: 278, e: 322 },
+              { s: 324, e: 358.79 },
+            ],
+          },
+        ];
+
+        const STORAGE_KEY = "road-progress-state";
+        const DATA_FILE_NAME = "road-progress-data.json";
+        let state = null;
+        let workspace = null;
+        let openEditorId = null;
+        let openBridgeEditorId = null;
+        let saveMode = "none"; // 'file' | 'browser'
+        let saveTimer = null;
+
+        const $ = (sel) => document.querySelector(sel);
+        const layersEl = $("#layers");
+        const rulerEl = $("#ruler");
+        const bridgeSectionEl = $("#bridgeSection");
+        const statusEl = $("#statusMsg");
+
+        function fmt(n) {
+          return (Math.round(n * 100) / 100).toString().replace(".", ",");
+        }
+        function pkToMeters(pk) {
+          return Math.round(pk * 100);
+        }
+        function pkToKm(pk) {
+          return pk * 0.1;
+        }
+        function fmtKm(pk) {
+          return fmt(pkToKm(pk));
+        }
+        function metersLabel(pk) {
+          const m = pkToMeters(pk);
+          const km = Math.floor(m / 1000);
+          const rem = m % 1000;
+          return km + " км " + String(rem).padStart(3, "0") + " м";
+        }
+        function layerCovered(layer) {
+          return layer.segments.reduce(
+            (sum, seg) => sum + Math.max(0, seg.e - seg.s),
+            0,
+          );
+        }
+        function layerStats(layer, total) {
+          const covered = layerCovered(layer);
+          const remaining = Math.max(0, total - covered);
+          const pct = total > 0 ? (covered / total) * 100 : 0;
+          return { covered, remaining, pct };
+        }
+        function displayLayerStats(layer, total) {
+          if (layer.id === "shma") return layerStats(layer, total);
+          const effectiveTotal = Math.max(0, total - BRIDGE_LEN_PK);
+          const covered = layerCovered(layer);
+          const remaining = Math.max(0, effectiveTotal - covered);
+          const pct =
+            effectiveTotal > 0 ? (covered / effectiveTotal) * 100 : 0;
+          return { covered, remaining, pct };
+        }
+        function progressLabel(stats) {
+          return (
+            "<b>" +
+            stats.pct.toFixed(1) +
+            "%</b> · " +
+            fmtKm(stats.covered) +
+            " км<br>ост. <b>" +
+            fmtKm(stats.remaining) +
+            " км</b>"
+          );
+        }
+        function fileStamp() {
+          const d = new Date();
+          const p = (n) => String(n).padStart(2, "0");
+          return (
+            d.getFullYear() +
+            "-" +
+            p(d.getMonth() + 1) +
+            "-" +
+            p(d.getDate()) +
+            "_" +
+            p(d.getHours()) +
+            p(d.getMinutes())
+          );
+        }
+        function reportDate() {
+          return new Date().toLocaleString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+        function sortedSegments(layer) {
+          return layer.segments.slice().sort((a, b) => a.s - b.s);
+        }
+        function hasInvalidSegments(layer, total) {
+          const ordered = sortedSegments(layer);
+          for (let i = 0; i < ordered.length; i++) {
+            const seg = ordered[i];
+            if (!Number.isFinite(seg.s) || !Number.isFinite(seg.e) || seg.s < 0 || seg.e > total || seg.e <= seg.s) return "Участок должен быть в пределах трассы, а «до» — больше «от».";
+            if (i && seg.s < ordered[i - 1].e - 0.001) return "Участки одного слоя не должны пересекаться.";
+          }
+          return "";
+        }
+        function commitLayer(layer, before, action) {
+          const error = hasInvalidSegments(layer, state.total);
+          if (error) { layer.segments = before; alert(error); return false; }
+          journal(action, layer.name);
+          renderRuler(); renderLayers(); scheduleSave(); return true;
+        }
+
+        function setStatus(msg, saved) {
+          statusEl.textContent = msg;
+          statusEl.className = "status" + (saved ? " saved" : "");
+        }
+        function clearInvalid(node) {
+          if (!node) return;
+          node.classList.remove("invalid");
+        }
+        function markInvalid(...nodes) {
+          nodes.forEach((node) => node && node.classList.add("invalid"));
+        }
+        function normalizeNumericInput(inp, fallback = "") {
+          const val = parseFloat(inp.value);
+          if (Number.isFinite(val)) {
+            inp.classList.remove("invalid");
+            return val;
+          }
+          if (fallback !== "") inp.value = fallback;
+          inp.classList.add("invalid");
+          return null;
+        }
+        function normalizeDateValue(value) {
+          if (!value) return "";
+          const text = String(value).trim();
+          return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+        }
+
+        function defaultBridgeState() {
+          return {
+            start: BRIDGE_START,
+            end: BRIDGE_END,
+            layers: [
+              {
+                id: "bridge_shma",
+                name: "ЩМА",
+                color: "#D71921",
+                segments: [],
+              },
+              {
+                id: "bridge_mz",
+                name: "М/З",
+                color: "#E8934A",
+                segments: [],
+              },
+            ],
+          };
+        }
+
+        function defaultState() {
+          return {
+            total: DEFAULT_TOTAL,
+            layers: JSON.parse(JSON.stringify(DEFAULT_LAYERS)),
+            bridge: defaultBridgeState(),
+          };
+        }
+
+        function newProject(name) {
+          return {
+            id: "project_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+            name,
+            state: defaultState(),
+            journal: [],
+          };
+        }
+        function normalizeProject(project, fallbackName) {
+          const safe = project && typeof project === "object" ? project : {};
+          const state = isValidState(safe.state) ? safe.state : defaultState();
+          return {
+            id: String(safe.id || fallbackName || "project_" + Date.now()),
+            name: String(safe.name || fallbackName || "Объект").trim() || "Объект",
+            state,
+            journal: Array.isArray(safe.journal) ? safe.journal.slice(0, 100) : [],
+          };
+        }
+        function normalizeWorkspace(data) {
+          if (data && Array.isArray(data.projects) && data.projects.length) {
+            const projects = data.projects.map((project, index) => normalizeProject(project, `project_${index + 1}`));
+            const activeProjectId = projects.some((project) => project.id === data.activeProjectId)
+              ? data.activeProjectId
+              : projects[0].id;
+            return { version: 2, activeProjectId, projects };
+          }
+          const project = normalizeProject(
+            { id: "project_main", name: "Основной объект", state: isValidState(data) ? data : defaultState(), journal: [] },
+            "project_main",
+          );
+          return { version: 2, activeProjectId: project.id, projects: [project] };
+        }
+        function selectActiveProject() {
+          const project = workspace.projects.find((p) => p.id === workspace.activeProjectId) || workspace.projects[0];
+          workspace.activeProjectId = project.id;
+          state = project.state;
+          ensureBridgeState();
+          return project;
+        }
+        function activeProject() { return workspace.projects.find((p) => p.id === workspace.activeProjectId); }
+        function journal(action, detail) {
+          const project = activeProject();
+          project.journal = project.journal || [];
+          project.journal.unshift({ date: new Date().toLocaleString("ru-RU"), action, detail });
+          project.journal = project.journal.slice(0, 100);
+        }
+
+        function ensureBridgeState() {
+          if (
+            !state.bridge ||
+            !Array.isArray(state.bridge.layers) ||
+            state.bridge.layers.length === 0
+          ) {
+            state.bridge = defaultBridgeState();
+          }
+          state.bridge.start = BRIDGE_START;
+          state.bridge.end = BRIDGE_END;
+        }
+
+        function isValidState(data) {
+          if (!data || typeof data !== "object") return false;
+          if (Array.isArray(data.projects) && data.projects.length > 0) return true;
+          return typeof data.total === "number" && Array.isArray(data.layers);
+        }
+
+        const storage = {
+          async loadFromFile() {
+            const res = await fetch("/api/data", { cache: "no-store" });
+            if (!res.ok) throw new Error("file load failed");
+            const data = await res.json();
+            if (!isValidState(data)) throw new Error("invalid file data");
+            return data;
+          },
+          async saveToFile(data) {
+            const res = await fetch("/api/data", {
+              method: "POST",
+              headers: { "Content-Type": "application/json; charset=utf-8" },
+              body: JSON.stringify(data),
+            });
+            if (!res.ok) throw new Error("file save failed");
+          },
+          loadFromBrowser() {
+            try {
+              const raw = localStorage.getItem(STORAGE_KEY);
+              if (raw) {
+                const data = JSON.parse(raw);
+                if (isValidState(data)) return data;
+              }
+            } catch (e) {
+              /* ignore */
+            }
+            return null;
+          },
+          saveToBrowser(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          },
+        };
+
+        function scheduleSave() {
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(save, 250);
+        }
+
+        async function save() {
+          try {
+            if (saveMode === "file") {
+              await storage.saveToFile(workspace);
+              setStatus("сохранено → " + DATA_FILE_NAME, true);
+              return;
+            }
+            storage.saveToBrowser(workspace);
+            setStatus(
+              "сохранено (только в браузере — запустите start.bat)",
+              true,
+            );
+          } catch (e) {
+            try {
+              storage.saveToBrowser(workspace);
+              setStatus("файл недоступен, сохранено в браузере");
+            } catch (err) {
+              setStatus("ошибка сохранения");
+              console.error(err);
+            }
+            console.error(e);
+          }
+        }
+
+        async function load() {
+          try {
+            workspace = normalizeWorkspace(await storage.loadFromFile());
+            saveMode = "file";
+            selectActiveProject();
+            render();
+            setStatus("данные из " + DATA_FILE_NAME);
+            return;
+          } catch (e) {
+            /* server not running or file missing */
+          }
+
+          workspace = normalizeWorkspace(storage.loadFromBrowser());
+          selectActiveProject();
+          saveMode = "browser";
+          render();
+          setStatus("запустите start.bat — данные будут в " + DATA_FILE_NAME);
+        }
+
+        function renderRuler() {
+          const total = state.total;
+          let majorStep = 50;
+          if (total <= 60) majorStep = 5;
+          else if (total <= 150) majorStep = 10;
+          else if (total <= 400) majorStep = 25;
+          else majorStep = 50;
+          const minorStep = majorStep / 5;
+          const labelMinGap = majorStep * 0.45;
+
+          let html = "";
+          for (let pk = 0; pk <= total + 0.001; pk += minorStep) {
+            const pct = (Math.min(pk, total) / total) * 100;
+            const isMajor = Math.abs(pk % majorStep) < 0.001 || pk === 0;
+            html += `<div class="tick${isMajor ? " major" : ""}" style="left:${pct}%;height:${isMajor ? 12 : 6}px"></div>`;
+            if (isMajor) {
+              const tooCloseToEnd = pk > 0 && total - pk < labelMinGap;
+              if (!tooCloseToEnd) {
+                html += `<div class="tick-label" style="left:${pct}%">${Math.round(pk)}</div>`;
+              }
+            }
+          }
+
+          const endOnMajor = Math.abs(total % majorStep) < 0.01;
+          if (!endOnMajor) {
+            html += `<div class="tick major" style="left:100%;height:12px"></div>`;
+          }
+          html += `<div class="tick-label end" style="left:100%">${fmt(total)}</div>`;
+          rulerEl.innerHTML = html;
+        }
+
+        function renderLayers() {
+          const total = state.total;
+          layersEl.innerHTML = "";
+          state.layers.forEach((layer) => {
+            const stats = displayLayerStats(layer, total);
+            const filter = $("#layerFilter").value;
+            if ((filter === "incomplete" && stats.pct >= 99.999) || (filter === "behind" && stats.pct >= (layer.planPercent || 0))) return;
+
+            const row = document.createElement("div");
+            row.className = "layer";
+            row.innerHTML = `
+        <div class="layer-label" data-toggle="${layer.id}">
+          <div class="swatch" style="background:${layer.color}"></div>
+          <div class="layer-text">
+            <div class="layer-name">${layer.name}</div>
+            <div class="layer-stats">${progressLabel(stats)}</div>
+          </div>
+        </div>
+        <div class="track-col">
+          <div class="track" data-toggle="${layer.id}">
+            ${layer.segments
+              .map((seg) => {
+                const left = Math.max(0, Math.min(100, (seg.s / total) * 100));
+                const width = Math.max(
+                  0.15,
+                  Math.min(100 - left, ((seg.e - seg.s) / total) * 100),
+                );
+                return `<div class="seg" title="${fmt(seg.s)} — ${fmt(seg.e)} ПК (${fmtKm(seg.e - seg.s)} км)"
+                style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
+              })
+              .join("")}
+          </div>
+        </div>
+      `;
+            layersEl.appendChild(row);
+
+            const editor = document.createElement("div");
+            editor.className =
+              "editor" + (openEditorId === layer.id ? " open" : "");
+            editor.dataset.layerId = layer.id;
+            editor.innerHTML = renderEditorContent(layer);
+            layersEl.appendChild(editor);
+          });
+
+          layersEl.querySelectorAll("[data-toggle]").forEach((el) => {
+            el.addEventListener("click", () => {
+              const id = el.dataset.toggle;
+              openEditorId = openEditorId === id ? null : id;
+              renderLayers();
+            });
+          });
+
+          attachEditorHandlers();
+          renderSummary();
+        }
+
+        function renderEditorContent(layer) {
+          const rows = layer.segments
+            .map((seg, idx) => ({ seg, idx }))
+            .sort((a, b) => a.seg.s - b.seg.s)
+            .map(
+              ({ seg, idx }) => `
+        <div class="seg-row">
+          <input type="number" inputmode="decimal" step="0.01" value="${seg.s}" data-layer="${layer.id}" data-idx="${idx}" data-field="s" title="Начало участка">
+          <span class="arrow">→</span>
+          <input type="number" inputmode="decimal" step="0.01" value="${seg.e}" data-layer="${layer.id}" data-idx="${idx}" data-field="e" title="Конец участка">
+          <span class="len">${fmt(seg.e - seg.s)} ПК · ${metersLabel(seg.e - seg.s)}</span>
+          <button class="del-btn" data-del-layer="${layer.id}" data-del-idx="${idx}" title="Удалить этот участок">✕</button>
+        </div>
+      `,
+            )
+            .join("");
+
+          return `
+      <div class="seg-row">
+        План:
+        <input type="number" inputmode="decimal" min="0" max="100" step="0.1" value="${layer.planPercent || 0}" data-plan-layer="${layer.id}" title="Процент выполнения по плану">
+        %
+        <span class="arrow">·</span>
+        <span>на дату</span>
+        <input type="date" value="${normalizeDateValue(layer.planDate || "")}" data-plan-date-layer="${layer.id}" title="Дата, к которой относится план">
+      </div>
+      ${rows || '<div class="seg-row" style="color:var(--text-faint)">участков пока нет</div>'}
+      <div class="add-row">
+        <input type="number" inputmode="decimal" step="0.01" placeholder="от" style="width:78px" id="new-s-${layer.id}" title="Начало нового участка">
+        <span class="arrow">→</span>
+        <input type="number" inputmode="decimal" step="0.01" placeholder="до" style="width:78px" id="new-e-${layer.id}" title="Конец нового участка">
+        <input type="text" placeholder="ответственный" style="width:110px" id="new-person-${layer.id}" title="Кто выполнил участок">
+        <input type="text" placeholder="качество / акт" style="width:120px" id="new-quality-${layer.id}" title="Краткая отметка о качестве или акте">
+        <button class="add-btn" data-add-layer="${layer.id}" title="Добавить участок в этот слой">+ участок</button>
+        <button class="del-btn" data-del-full-layer="${layer.id}" style="margin-left:auto" title="Удалить весь слой">удалить слой</button>
+      </div>
+    `;
+        }
+
+        function attachEditorHandlers() {
+          layersEl
+            .querySelectorAll(".editor input[data-field]")
+            .forEach((inp) => {
+              inp.addEventListener("change", () => {
+                const layer = state.layers.find(
+                  (l) => l.id === inp.dataset.layer,
+                );
+                const seg = layer.segments[inp.dataset.idx];
+                const before = JSON.parse(JSON.stringify(layer.segments));
+                const val = parseFloat(inp.value);
+                if (!isNaN(val)) seg[inp.dataset.field] = val;
+                commitLayer(layer, before, "Изменён участок слоя");
+              });
+            });
+          layersEl.querySelectorAll("[data-plan-layer]").forEach((inp) => inp.addEventListener("change", () => {
+            const layer = state.layers.find((l) => l.id === inp.dataset.planLayer);
+            layer.planPercent = Math.max(0, Math.min(100, parseFloat(inp.value) || 0));
+            journal("Изменён план", layer.name); renderSummary(); scheduleSave();
+          }));
+          layersEl.querySelectorAll("[data-plan-date-layer]").forEach((inp) => inp.addEventListener("change", () => {
+            const layer = state.layers.find((l) => l.id === inp.dataset.planDateLayer);
+            layer.planDate = normalizeDateValue(inp.value);
+            journal("Изменена дата плана", layer.name); renderSummary(); scheduleSave();
+          }));
+          layersEl.querySelectorAll("[data-del-layer]").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const layer = state.layers.find(
+                  (l) => l.id === btn.dataset.delLayer,
+                );
+                if (!confirm(`Удалить участок слоя «${layer.name}»?`)) return;
+                layer.segments.splice(parseInt(btn.dataset.delIdx), 1);
+                journal("Удалён участок слоя", layer.name); renderLayers(); scheduleSave();
+              });
+            });
+          layersEl.querySelectorAll("[data-del-full-layer]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              if (
+                !confirm(
+                  'Удалить слой "' +
+                    state.layers.find((l) => l.id === btn.dataset.delFullLayer)
+                      .name +
+                    '" целиком?',
+                )
+              )
+                return;
+              state.layers = state.layers.filter(
+                (l) => l.id !== btn.dataset.delFullLayer,
+              );
+              openEditorId = null;
+              renderLayers();
+              scheduleSave();
+            });
+          });
+          layersEl.querySelectorAll("[data-add-layer]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const id = btn.dataset.addLayer;
+              const sInp = $("#new-s-" + id),
+                eInp = $("#new-e-" + id);
+              const s = normalizeNumericInput(sInp),
+                e = normalizeNumericInput(eInp);
+              if (s === null || e === null || e <= s) {
+                markInvalid(sInp, eInp);
+                return;
+              }
+              const layer = state.layers.find((l) => l.id === id);
+              const before = JSON.parse(JSON.stringify(layer.segments));
+              layer.segments.push({ s, e, status: "Выполнено", responsible: $("#new-person-" + id).value.trim(), quality: $("#new-quality-" + id).value.trim(), date: new Date().toLocaleDateString("ru-RU") });
+              commitLayer(layer, before, "Добавлен участок слоя");
+            });
+          });
+        }
+
+        function renderSummary() {
+          const total = state.total;
+          const layerStatsList = state.layers.map((layer) => ({
+            layer,
+            stats: displayLayerStats(layer, total),
+            plan: layer.planPercent || 0,
+          }));
+          const objectPct = layerStatsList.length
+            ? layerStatsList.reduce((sum, item) => sum + item.stats.pct, 0) /
+              layerStatsList.length
+            : 0;
+          const planAvg = layerStatsList.length
+            ? layerStatsList.reduce((sum, item) => sum + item.plan, 0) /
+              layerStatsList.length
+            : 0;
+          const rows = layerStatsList
+            .map((layer) => {
+              const stats = layer.stats;
+              const plan = layer.plan;
+              const planDate = normalizeDateValue(layer.layer.planDate || "");
+              return `<div class="summary-row">
+        <span class="summary-name">${layer.layer.name}</span>
+        <span>план ${plan.toFixed(1)}%${planDate ? " · " + planDate.split("-").reverse().join(".") : ""} · факт ${stats.pct.toFixed(1)}% · ${stats.pct - plan >= 0 ? "+" : ""}${(stats.pct - plan).toFixed(1)} п.п.</span>
+      </div>`;
+            })
+            .join("");
+
+          $("#summaryTotal").innerHTML =
+            `<div class="summary-hdr">Сводка по слоям</div>
+       <div class="summary-meta">Общая протяжённость: <b>${fmtKm(total)} км</b> (${fmt(total)} ПК · ${metersLabel(total)})</div>
+       <div class="summary-overall">Общая выполненность объекта: <b>${objectPct.toFixed(1)}%</b></div>
+       <div class="summary-meta">Средний план по слоям: <b>${planAvg.toFixed(1)}%</b></div>
+       <div class="summary-grid">${rows}</div>`;
+          const entries = (activeProject().journal || []).slice(0, 8).map((item) => `<div class="summary-row"><span>${item.date}</span><span><b>${item.action}</b> · ${item.detail || ""}</span></div>`).join("");
+          $("#journalPanel").innerHTML = `<div class="summary-hdr">Журнал изменений</div>${entries || '<div class="summary-meta">Изменений в журнале пока нет.</div>'}`;
+        }
+
+        function renderBridgeRulerHtml() {
+          const start = BRIDGE_START;
+          const total = BRIDGE_LEN_PK;
+          const majorStep = 0.5;
+          const minorStep = 0.1;
+          const labelMinGap = majorStep * 0.45;
+          let html = '<div class="ruler">';
+          for (let offset = 0; offset <= total + 0.001; offset += minorStep) {
+            const pct = (Math.min(offset, total) / total) * 100;
+            const pk = start + offset;
+            const isMajor =
+              Math.abs(offset % majorStep) < 0.001 || offset === 0;
+            html += `<div class="tick${isMajor ? " major" : ""}" style="left:${pct}%;height:${isMajor ? 12 : 6}px"></div>`;
+            if (isMajor) {
+              const tooCloseToEnd = offset > 0 && total - offset < labelMinGap;
+              if (!tooCloseToEnd) {
+                html += `<div class="tick-label" style="left:${pct}%">${fmt(pk)}</div>`;
+              }
+            }
+          }
+          html += `<div class="tick major" style="left:100%;height:12px"></div>`;
+          html += `<div class="tick-label end" style="left:100%">${fmt(BRIDGE_END)}</div>`;
+          html += "</div>";
+          return html;
+        }
+
+        function renderBridgeEditorContent(layer) {
+          const rows = layer.segments
+            .map((seg, idx) => ({ seg, idx }))
+            .sort((a, b) => a.seg.s - b.seg.s)
+            .map(
+              ({ seg, idx }) => `
+        <div class="seg-row">
+          <input type="number" inputmode="decimal" step="0.01" value="${seg.s}" data-bridge-layer="${layer.id}" data-idx="${idx}" data-field="s" title="Начало участка">
+          <span class="arrow">→</span>
+          <input type="number" inputmode="decimal" step="0.01" value="${seg.e}" data-bridge-layer="${layer.id}" data-idx="${idx}" data-field="e" title="Конец участка">
+          <span class="len">${fmt(seg.e - seg.s)} ПК · ${metersLabel(seg.e - seg.s)}</span>
+          <button class="del-btn" data-bridge-del-layer="${layer.id}" data-del-idx="${idx}" title="Удалить этот участок">✕</button>
+        </div>
+      `,
+            )
+            .join("");
+
+          return `
+      ${rows || '<div class="seg-row" style="color:var(--text-faint)">участков пока нет</div>'}
+      <div class="add-row">
+        <input type="number" inputmode="decimal" step="0.01" placeholder="от" style="width:78px" id="bridge-new-s-${layer.id}" title="Начало нового участка">
+        <span class="arrow">→</span>
+        <input type="number" inputmode="decimal" step="0.01" placeholder="до" style="width:78px" id="bridge-new-e-${layer.id}" title="Конец нового участка">
+        <button class="add-btn" data-bridge-add-layer="${layer.id}" title="Добавить участок в мостовой слой">+ участок</button>
+      </div>
+    `;
+        }
+
+        function attachBridgeEditorHandlers() {
+          bridgeSectionEl
+            .querySelectorAll(".editor input[data-field]")
+            .forEach((inp) => {
+              inp.addEventListener("change", () => {
+                const layer = state.bridge.layers.find(
+                  (l) => l.id === inp.dataset.bridgeLayer,
+                );
+                const seg = layer.segments[inp.dataset.idx];
+                const val = parseFloat(inp.value);
+                if (!isNaN(val)) seg[inp.dataset.field] = val;
+                renderBridgeSection();
+                scheduleSave();
+              });
+            });
+          bridgeSectionEl
+            .querySelectorAll("[data-bridge-del-layer]")
+            .forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const layer = state.bridge.layers.find(
+                  (l) => l.id === btn.dataset.bridgeDelLayer,
+                );
+                if (!confirm(`Удалить участок слоя «${layer.name}» на мосту?`)) return;
+                layer.segments.splice(parseInt(btn.dataset.delIdx), 1);
+                renderBridgeSection();
+                scheduleSave();
+              });
+            });
+          bridgeSectionEl
+            .querySelectorAll("[data-bridge-add-layer]")
+            .forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const id = btn.dataset.bridgeAddLayer;
+                const sInp = $("#bridge-new-s-" + id),
+                  eInp = $("#bridge-new-e-" + id);
+                const s = normalizeNumericInput(sInp),
+                  e = normalizeNumericInput(eInp);
+                if (s === null || e === null || e <= s) {
+                  markInvalid(sInp, eInp);
+                  return;
+                }
+                const layer = state.bridge.layers.find((l) => l.id === id);
+                layer.segments.push({ s, e });
+                renderBridgeSection();
+                scheduleSave();
+              });
+            });
+        }
+
+        function renderBridgeSection() {
+          ensureBridgeState();
+          const bridgeTotal = BRIDGE_LEN_PK;
+          const layersContainerId = "bridgeLayers";
+
+          let layersHtml = "";
+          state.bridge.layers.forEach((layer) => {
+            const stats = layerStats(layer, bridgeTotal);
+            layersHtml += `
+        <div class="layer">
+          <div class="layer-label" data-bridge-toggle="${layer.id}">
+            <div class="swatch" style="background:${layer.color}"></div>
+            <div class="layer-text">
+              <div class="layer-name">${layer.name}</div>
+              <div class="layer-stats">${progressLabel(stats)}</div>
+            </div>
+          </div>
+          <div class="track-col">
+            <div class="track" data-bridge-toggle="${layer.id}">
+              ${layer.segments
+                .map((seg) => {
+                  const relS = seg.s - BRIDGE_START;
+                  const relE = seg.e - BRIDGE_START;
+                  const left = Math.max(
+                    0,
+                    Math.min(100, (relS / bridgeTotal) * 100),
+                  );
+                  const width = Math.max(
+                    0.15,
+                    Math.min(
+                      100 - left,
+                      ((relE - relS) / bridgeTotal) * 100,
+                    ),
+                  );
+                  return `<div class="seg" title="${fmt(seg.s)} — ${fmt(seg.e)} ПК (${fmtKm(seg.e - seg.s)} км)"
+                style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
+                })
+                .join("")}
+            </div>
+          </div>
+        </div>`;
+            layersHtml += `<div class="editor${openBridgeEditorId === layer.id ? " open" : ""}" data-bridge-layer-id="${layer.id}">${renderBridgeEditorContent(layer)}</div>`;
+          });
+
+          const summaryRows = state.bridge.layers
+            .map((layer) => {
+              const stats = layerStats(layer, bridgeTotal);
+              return `<div class="summary-row">
+        <span class="summary-name">${layer.name}</span>
+        <span>${stats.pct.toFixed(1)}% · ${fmtKm(stats.covered)} км · ост. ${fmtKm(stats.remaining)} км</span>
+      </div>`;
+            })
+            .join("");
+
+          bridgeSectionEl.innerHTML = `
+        <div class="section-hdr">
+          <div class="eyebrow">Мост · Пикетаж</div>
+          <h2>Участок моста</h2>
+          <div class="meta">
+            Начало моста: <b>ПК ${fmt(BRIDGE_START)}</b> ·
+            Конец моста: <b>ПК ${fmt(BRIDGE_END)}</b> ·
+            Длина: <b>${metersLabel(BRIDGE_LEN_PK)}</b> (${fmt(BRIDGE_LEN_PK)} ПК)
+          </div>
+        </div>
+        <div class="ruler-block">${renderBridgeRulerHtml()}</div>
+        <div id="${layersContainerId}">${layersHtml}</div>
+        <div class="summary-total" style="margin-top:22px">
+          <div class="summary-hdr">Сводка по слоям (мост)</div>
+          <div class="summary-meta">Протяжённость участка: <b>${fmtKm(BRIDGE_LEN_PK)} км</b> (ПК ${fmt(BRIDGE_START)} — ${fmt(BRIDGE_END)} · ${metersLabel(BRIDGE_LEN_PK)})</div>
+          <div class="summary-grid">${summaryRows}</div>
+        </div>`;
+
+          bridgeSectionEl
+            .querySelectorAll("[data-bridge-toggle]")
+            .forEach((el) => {
+              el.addEventListener("click", () => {
+                const id = el.dataset.bridgeToggle;
+                openBridgeEditorId =
+                  openBridgeEditorId === id ? null : id;
+                renderBridgeSection();
+              });
+            });
+
+          attachBridgeEditorHandlers();
+        }
+
+        function buildPdfRulerHtml(total) {
+          let majorStep = 50;
+          if (total <= 60) majorStep = 5;
+          else if (total <= 150) majorStep = 10;
+          else if (total <= 400) majorStep = 25;
+          else majorStep = 50;
+          const minorStep = majorStep / 5;
+          const labelMinGap = majorStep * 0.45;
+          let html = '<div class="pdf-ruler">';
+          for (let pk = 0; pk <= total + 0.001; pk += minorStep) {
+            const pct = (Math.min(pk, total) / total) * 100;
+            const isMajor = Math.abs(pk % majorStep) < 0.001 || pk === 0;
+            html += `<div class="pdf-tick" style="left:${pct}%;height:${isMajor ? 10 : 5}px"></div>`;
+            if (isMajor) {
+              const tooCloseToEnd = pk > 0 && total - pk < labelMinGap;
+              if (!tooCloseToEnd)
+                html += `<div class="pdf-tick-label" style="left:${pct}%">${Math.round(pk)}</div>`;
+            }
+          }
+          if (Math.abs(total % majorStep) >= 0.01) {
+            html +=
+              '<div class="pdf-tick" style="left:100%;height:10px"></div>';
+          }
+          html += `<div class="pdf-tick-label end" style="left:100%">${fmt(total)}</div></div>`;
+          return html;
+        }
+
+        function buildPdfReportElement() {
+          const total = state.total;
+          let chartHtml = buildPdfRulerHtml(total);
+          state.layers.forEach((layer) => {
+            const stats = displayLayerStats(layer, total);
+            const segs = layer.segments
+              .map((seg) => {
+                const left = Math.max(0, Math.min(100, (seg.s / total) * 100));
+                const width = Math.max(
+                  0.15,
+                  Math.min(100 - left, ((seg.e - seg.s) / total) * 100),
+                );
+                return `<div class="pdf-seg" style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
+              })
+              .join("");
+            chartHtml += `
+        <div class="pdf-row">
+          <div class="pdf-label"><b>${layer.name}</b><br>${stats.pct.toFixed(1)}% · ${fmtKm(stats.covered)} км<br>ост. ${fmtKm(stats.remaining)} км</div>
+          <div class="pdf-track-wrap"><div class="pdf-track">${segs}</div></div>
+        </div>`;
+          });
+
+          const tableRows = state.layers
+            .map((layer) => {
+              const stats = displayLayerStats(layer, total);
+              const segList =
+                sortedSegments(layer)
+                  .map(
+                    (seg) =>
+                      `${fmt(seg.s)}–${fmt(seg.e)} (${fmtKm(seg.e - seg.s)} км)`,
+                  )
+                  .join("; ") || "—";
+              return `<tr>
+        <td><b>${layer.name}</b></td>
+        <td>${stats.pct.toFixed(1)}%</td>
+        <td>${fmtKm(stats.covered)} км</td>
+        <td>${fmtKm(stats.remaining)} км</td>
+        <td>${segList}</td>
+      </tr>`;
+            })
+            .join("");
+
+          ensureBridgeState();
+          const bridgeTotal = BRIDGE_LEN_PK;
+          let bridgeChartHtml =
+            `<h2 style="font-size:14px;margin:20px 0 8px">Участок моста (ПК ${fmt(BRIDGE_START)} — ${fmt(BRIDGE_END)}, ${metersLabel(BRIDGE_LEN_PK)})</h2>`;
+          bridgeChartHtml += buildPdfBridgeRulerHtml();
+          state.bridge.layers.forEach((layer) => {
+            const stats = layerStats(layer, bridgeTotal);
+            const segs = layer.segments
+              .map((seg) => {
+                const relS = seg.s - BRIDGE_START;
+                const relE = seg.e - BRIDGE_START;
+                const left = Math.max(
+                  0,
+                  Math.min(100, (relS / bridgeTotal) * 100),
+                );
+                const width = Math.max(
+                  0.15,
+                  Math.min(
+                    100 - left,
+                    ((relE - relS) / bridgeTotal) * 100,
+                  ),
+                );
+                return `<div class="pdf-seg" style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
+              })
+              .join("");
+            bridgeChartHtml += `
+        <div class="pdf-row">
+          <div class="pdf-label"><b>${layer.name}</b><br>${stats.pct.toFixed(1)}% · ${fmtKm(stats.covered)} км<br>ост. ${fmtKm(stats.remaining)} км</div>
+          <div class="pdf-track-wrap"><div class="pdf-track">${segs}</div></div>
+        </div>`;
+          });
+
+          const bridgeTableRows = state.bridge.layers
+            .map((layer) => {
+              const stats = layerStats(layer, bridgeTotal);
+              const segList =
+                sortedSegments(layer)
+                  .map(
+                    (seg) =>
+                      `${fmt(seg.s)}–${fmt(seg.e)} (${fmtKm(seg.e - seg.s)} км)`,
+                  )
+                  .join("; ") || "—";
+              return `<tr>
+        <td><b>${layer.name}</b></td>
+        <td>${stats.pct.toFixed(1)}%</td>
+        <td>${fmtKm(stats.covered)} км</td>
+        <td>${fmtKm(stats.remaining)} км</td>
+        <td>${segList}</td>
+      </tr>`;
+            })
+            .join("");
+
+          const el = document.createElement("div");
+          el.className = "pdf-report";
+          el.innerHTML = `
+      <h1>Прогресс укладки слоёв</h1>
+      <div class="pdf-sub">Дата: ${reportDate()} · Протяжённость: ${fmtKm(total)} км (${fmt(total)} ПК · ${metersLabel(total)})</div>
+      <div class="pdf-chart">${chartHtml}</div>
+      <table>
+        <tr><th>Слой</th><th>%</th><th>Выполнено</th><th>Осталось</th><th>Участки (ПК)</th></tr>
+        ${tableRows}
+      </table>
+      <div class="pdf-chart">${bridgeChartHtml}</div>
+      <table>
+        <tr><th colspan="5">Мост (ПК ${fmt(BRIDGE_START)} — ${fmt(BRIDGE_END)})</th></tr>
+        <tr><th>Слой</th><th>%</th><th>Выполнено</th><th>Осталось</th><th>Участки (ПК)</th></tr>
+        ${bridgeTableRows}
+      </table>
+      <div class="pdf-foot">1 пикет (ПК) = 100 м. Отчёт для печати.</div>`;
+          el.children[4]?.remove();
+          el.children[4]?.remove();
+          return el;
+        }
+
+        function buildPdfBridgeRulerHtml() {
+          const start = BRIDGE_START;
+          const total = BRIDGE_LEN_PK;
+          const majorStep = 0.5;
+          const minorStep = 0.1;
+          const labelMinGap = majorStep * 0.45;
+          let html = '<div class="pdf-ruler">';
+          for (let offset = 0; offset <= total + 0.001; offset += minorStep) {
+            const pct = (Math.min(offset, total) / total) * 100;
+            const pk = start + offset;
+            const isMajor =
+              Math.abs(offset % majorStep) < 0.001 || offset === 0;
+            html += `<div class="pdf-tick" style="left:${pct}%;height:${isMajor ? 10 : 5}px"></div>`;
+            if (isMajor) {
+              const tooCloseToEnd = offset > 0 && total - offset < labelMinGap;
+              if (!tooCloseToEnd)
+                html += `<div class="pdf-tick-label" style="left:${pct}%">${fmt(pk)}</div>`;
+            }
+          }
+          html += `<div class="pdf-tick" style="left:100%;height:10px"></div>`;
+          html += `<div class="pdf-tick-label end" style="left:100%">${fmt(BRIDGE_END)}</div></div>`;
+          return html;
+        }
+
+        async function exportPdf() {
+          if (!window.jspdf || !window.html2canvas) {
+            alert(
+              "Не удалось загрузить библиотеки PDF. Проверьте интернет и обновите страницу.",
+            );
+            return;
+          }
+          const btn = $("#pdfBtn");
+          btn.disabled = true;
+          setStatus("формирование PDF…");
+          const report = buildPdfReportElement();
+          document.body.appendChild(report);
+          try {
+            const canvas = await html2canvas(report, {
+              scale: 2,
+              backgroundColor: "#ffffff",
+              useCORS: true,
+              logging: false,
+            });
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF("p", "mm", "a4");
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 8;
+            const usableWidth = pageWidth - margin * 2;
+            const imgWidth = usableWidth;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = margin;
+            const imgData = canvas.toDataURL("image/png");
+
+            pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight - margin * 2;
+
+            while (heightLeft > 0) {
+              position = heightLeft - imgHeight + margin;
+              pdf.addPage();
+              pdf.addImage(
+                imgData,
+                "PNG",
+                margin,
+                position,
+                imgWidth,
+                imgHeight,
+              );
+              heightLeft -= pageHeight - margin * 2;
+            }
+
+            pdf.save("otchet-progress-" + fileStamp() + ".pdf");
+            setStatus("PDF сохранён", true);
+          } catch (err) {
+            console.error(err);
+            setStatus("ошибка PDF");
+            alert("Не удалось создать PDF.");
+          } finally {
+            report.remove();
+            btn.disabled = false;
+          }
+        }
+
+        async function exportWord() {
+          const btn = $("#wordBtn");
+          btn.disabled = true;
+          setStatus("формирование Word…");
+          try {
+            const res = await fetch("/api/export/word", {
+              method: "POST",
+              headers: { "Content-Type": "application/json; charset=utf-8" },
+              body: JSON.stringify(workspace),
+            });
+            if (!res.ok) throw new Error("export failed");
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "otchet-progress-" + fileStamp() + ".docx";
+            link.click();
+            URL.revokeObjectURL(url);
+            setStatus("Word сохранён", true);
+          } catch (err) {
+            console.error(err);
+            setStatus("ошибка Word — запустите start.bat");
+            alert(
+              "Word-отчёт доступен через start.bat (нужен запущенный сервер).",
+            );
+          } finally {
+            btn.disabled = false;
+          }
+        }
+
+        function render() {
+          const select = $("#projectSelect");
+          select.innerHTML = workspace.projects.map((project) => `<option value="${project.id}">${project.name}</option>`).join("");
+          select.value = workspace.activeProjectId;
+          $("#totalInput").value = state.total;
+          $("#totalDisplay").textContent =
+            fmt(state.total) + " ПК (" + metersLabel(state.total) + ")";
+          renderRuler();
+          renderLayers();
+        }
+
+        async function exportExcel() {
+          try {
+            await save();
+            const res = await fetch("/api/export/excel");
+            if (!res.ok) throw new Error();
+            const url = URL.createObjectURL(await res.blob());
+            const link = document.createElement("a"); link.href = url; link.download = "progress-" + fileStamp() + ".xlsx"; link.click(); URL.revokeObjectURL(url);
+            setStatus("Excel сохранён", true);
+          } catch (e) { setStatus("ошибка Excel — запустите start.bat"); }
+        }
+        async function importExcel(file) {
+          try {
+            const res = await fetch("/api/import/excel", { method:"POST", headers:{"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, body:file });
+            if (!res.ok) throw new Error(await res.text());
+            workspace = normalizeWorkspace(await res.json()); selectActiveProject(); journal("Импорт Excel", file.name); render(); scheduleSave(); setStatus("Excel импортирован", true);
+          } catch (e) { alert("Не удалось импортировать файл. Используйте лист «Участки» с колонками «Слой», «От, ПК», «До, ПК»."); }
+        }
+        async function createBackup() { try { await save(); const res = await fetch("/api/backups/create", {method:"POST"}); if (!res.ok) throw new Error(); setStatus("резервная копия создана", true); } catch(e) { setStatus("бэкап доступен через start.bat"); } }
+        async function restoreBackup() {
+          try { const backups = await (await fetch("/api/backups")).json(); if (!backups.length) return alert("Резервных копий пока нет."); const text = backups.slice(0, 10).map((b,i) => `${i+1}. ${b.name}`).join("\n"); const n = parseInt(prompt("Введите номер копии для восстановления:\n" + text), 10); if (!n || !backups[n-1]) return; const res = await fetch("/api/backups/restore", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name:backups[n-1].name})}); if (!res.ok) throw new Error(); workspace = normalizeWorkspace(await res.json()); selectActiveProject(); render(); setStatus("копия восстановлена", true); } catch(e) { alert("Не удалось восстановить копию."); }
+        }
+
+
+        $("#totalInput").addEventListener("change", (e) => {
+          const val = parseFloat(e.target.value);
+          if (!isNaN(val) && val > 0) {
+            state.total = val;
+            render();
+            scheduleSave();
+          }
+        });
+
+        $("#addLayerBtn").addEventListener("click", () => {
+          const nameInp = $("#newLayerName");
+          const colorInp = $("#newLayerColor");
+          const name = nameInp.value.trim();
+          if (!name) {
+            nameInp.style.borderColor = "#D71921";
+            return;
+          }
+          const id = "layer_" + Date.now();
+          state.layers.push({ id, name, color: colorInp.value, segments: [] });
+          journal("Добавлен слой", name);
+          nameInp.value = "";
+          openEditorId = id;
+          renderLayers();
+          scheduleSave();
+        });
+
+        $("#pdfBtn").addEventListener("click", exportPdf);
+        $("#wordBtn").addEventListener("click", exportWord);
+        $("#excelBtn").addEventListener("click", exportExcel);
+        $("#importExcelBtn").addEventListener("click", () => $("#excelFile").click());
+        $("#excelFile").addEventListener("change", (e) => { if (e.target.files[0]) importExcel(e.target.files[0]); e.target.value = ""; });
+        $("#backupBtn").addEventListener("click", createBackup);
+        $("#restoreBtn").addEventListener("click", restoreBackup);
+        $("#layerFilter").addEventListener("change", renderLayers);
+        $("#projectSelect").addEventListener("change", (e) => { workspace.activeProjectId = e.target.value; selectActiveProject(); openEditorId = null; render(); scheduleSave(); });
+        $("#addProjectBtn").addEventListener("click", () => { const name = prompt("Название нового объекта:"); if (!name || !name.trim()) return; const project = newProject(name.trim()); workspace.projects.push(project); workspace.activeProjectId = project.id; selectActiveProject(); journal("Создан объект", project.name); render(); scheduleSave(); });
+        $("#renameProjectBtn").addEventListener("click", () => { const project = activeProject(); const name = prompt("Название объекта:", project.name); if (!name || !name.trim()) return; project.name = name.trim(); journal("Переименован объект", project.name); render(); scheduleSave(); });
+        $("#pkSearchBtn").addEventListener("click", () => { const pk = parseFloat($("#pkSearch").value); if (!Number.isFinite(pk)) return; let found = null; state.layers.forEach((layer) => layer.segments.forEach((seg) => { if (pk >= seg.s && pk <= seg.e) found = layer.id; })); if (!found) return alert("На этом ПК нет выполненного участка."); openEditorId = found; renderLayers(); const row = layersEl.querySelector(`.editor[data-layer-id="${found}"]`); if (row) row.scrollIntoView({behavior:"smooth", block:"center"}); });
+        $("#newLayerName").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#addLayerBtn").click(); } });
+        $("#pkSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#pkSearchBtn").click(); } });
+        $("#totalInput").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
+        $("#road-app").addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            save();
+          }
+          if (e.key === "Escape") {
+            openEditorId = null;
+            openBridgeEditorId = null;
+            renderLayers();
+          }
+        });
+
+        setStatus("загрузка…");
+        load();
+      })();
+    </script>
+  </body>
+</html>
