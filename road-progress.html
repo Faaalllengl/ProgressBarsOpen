@@ -742,6 +742,59 @@
       .pdf-report .pdf-chart {
         margin: 16px 0 20px;
       }
+      .pdf-report .pdf-overall {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin: 16px 0 20px;
+        padding: 14px 16px;
+        border: 1px solid var(--color-report-border);
+        border-left: 5px solid var(--pdf-accent);
+        background: var(--color-report-surface);
+      }
+      .pdf-report .pdf-overall-main {
+        min-width: 150px;
+      }
+      .pdf-report .pdf-overall-title {
+        margin-bottom: 2px;
+        font-size: 11px;
+        color: var(--color-report-muted);
+      }
+      .pdf-report .pdf-overall-percent {
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        color: var(--pdf-accent);
+      }
+      .pdf-report .pdf-overall-details {
+        margin-top: 3px;
+        font-size: 10px;
+        color: var(--color-report-muted);
+      }
+      .pdf-report .pdf-overall-visual {
+        flex: 1;
+      }
+      .pdf-report .pdf-overall-bar {
+        display: flex;
+        height: 18px;
+        overflow: hidden;
+        border: 1px solid var(--color-report-track-border);
+        border-radius: 9px;
+        background: #e8e8e8;
+      }
+      .pdf-report .pdf-overall-done {
+        background: var(--pdf-accent);
+      }
+      .pdf-report .pdf-overall-left {
+        background: #d9dde2;
+      }
+      .pdf-report .pdf-overall-legend {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+        font-size: 9px;
+        color: var(--color-report-muted);
+      }
       .pdf-report .pdf-row {
         display: flex;
         align-items: center;
@@ -1436,6 +1489,23 @@
             effectiveTotal > 0 ? (covered / effectiveTotal) * 100 : 0;
           return { covered, remaining, pct };
         }
+        function overallStats(layers, total) {
+          const covered = layers.reduce(
+            (sum, layer) => sum + displayLayerStats(layer, total).covered,
+            0,
+          );
+          const totalLength = layers.reduce(
+            (sum, layer) =>
+              sum +
+              (layer.id === "shma"
+                ? total
+                : Math.max(0, total - BRIDGE_LEN_PK)),
+            0,
+          );
+          const remaining = Math.max(0, totalLength - covered);
+          const pct = totalLength > 0 ? (covered / totalLength) * 100 : 0;
+          return { covered, remaining, totalLength, pct };
+        }
         function progressLabel(stats) {
           return (
             "<b>" +
@@ -1897,21 +1967,7 @@
             stats: displayLayerStats(layer, total),
             plan: layer.planPercent || 0,
           }));
-          const totalCovered = layerStatsList.reduce(
-            (sum, item) => sum + item.stats.covered,
-            0,
-          );
-          const totalLayerLength = layerStatsList.reduce((sum, item) => {
-            const layerTotal =
-              item.layer.id === "shma"
-                ? total
-                : Math.max(0, total - BRIDGE_LEN_PK);
-            return sum + layerTotal;
-          }, 0);
-          const objectPct =
-            totalLayerLength > 0
-              ? (totalCovered / totalLayerLength) * 100
-              : 0;
+          const objectPct = overallStats(state.layers, total).pct;
           const planAvg = layerStatsList.length
             ? layerStatsList.reduce((sum, item) => sum + item.plan, 0) /
               layerStatsList.length
@@ -2156,6 +2212,7 @@
 
         function buildPdfReportElement() {
           const total = state.total;
+          const overall = overallStats(state.layers, total);
           let chartHtml = buildPdfRulerHtml(total);
           state.layers.forEach((layer) => {
             const stats = displayLayerStats(layer, total);
@@ -2253,6 +2310,20 @@
           el.innerHTML = `
       <h1>Прогресс укладки слоёв</h1>
       <div class="pdf-sub">Дата: ${reportDate()} · Протяжённость: ${fmtKm(total)} км (${fmt(total)} ПК · ${metersLabel(total)})</div>
+      <div class="pdf-overall">
+        <div class="pdf-overall-main">
+          <div class="pdf-overall-title">Общая выполненность объекта</div>
+          <div class="pdf-overall-percent">${overall.pct.toFixed(1)}%</div>
+          <div class="pdf-overall-details">Уложено ${fmtKm(overall.covered)} км из ${fmtKm(overall.totalLength)} км</div>
+        </div>
+        <div class="pdf-overall-visual">
+          <div class="pdf-overall-bar">
+            <div class="pdf-overall-done" style="width:${overall.pct.toFixed(3)}%"></div>
+            <div class="pdf-overall-left" style="width:${Math.max(0, 100 - overall.pct).toFixed(3)}%"></div>
+          </div>
+          <div class="pdf-overall-legend"><span>Уложено: ${fmtKm(overall.covered)} км</span><span>Осталось: ${fmtKm(overall.remaining)} км</span></div>
+        </div>
+      </div>
       <div class="pdf-chart">${chartHtml}</div>
       <table>
         <tr><th>Слой</th><th>%</th><th>Выполнено</th><th>Осталось</th><th>Участки (ПК)</th></tr>
@@ -2265,8 +2336,8 @@
         ${bridgeTableRows}
       </table>
       <div class="pdf-foot">1 пикет (ПК) = 100 м. Отчёт для печати.</div>`;
-          el.children[4]?.remove();
-          el.children[4]?.remove();
+          el.children[5]?.remove();
+          el.children[5]?.remove();
           return el;
         }
 
