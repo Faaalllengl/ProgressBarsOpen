@@ -609,6 +609,50 @@
         border-radius: var(--radius-1);
         color: var(--text);
       }
+      .summary-help {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 15px;
+        height: 15px;
+        margin-left: 4px;
+        border: 1px solid currentColor;
+        border-radius: 50%;
+        color: var(--text-faint);
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: help;
+        vertical-align: 1px;
+      }
+      .summary-help::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        z-index: 10;
+        left: 50%;
+        bottom: calc(100% + 8px);
+        width: 270px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-1);
+        background: var(--surface);
+        box-shadow: var(--shadow-1);
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 400;
+        line-height: 1.4;
+        text-align: left;
+        pointer-events: none;
+        opacity: 0;
+        transform: translate(-50%, 4px);
+        transition: opacity 0.15s ease, transform 0.15s ease;
+      }
+      .summary-help:hover::after,
+      .summary-help:focus-visible::after {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
       .hint-line {
         margin-top: 6px;
         color: var(--text-faint);
@@ -1853,10 +1897,21 @@
             stats: displayLayerStats(layer, total),
             plan: layer.planPercent || 0,
           }));
-          const objectPct = layerStatsList.length
-            ? layerStatsList.reduce((sum, item) => sum + item.stats.pct, 0) /
-              layerStatsList.length
-            : 0;
+          const totalCovered = layerStatsList.reduce(
+            (sum, item) => sum + item.stats.covered,
+            0,
+          );
+          const totalLayerLength = layerStatsList.reduce((sum, item) => {
+            const layerTotal =
+              item.layer.id === "shma"
+                ? total
+                : Math.max(0, total - BRIDGE_LEN_PK);
+            return sum + layerTotal;
+          }, 0);
+          const objectPct =
+            totalLayerLength > 0
+              ? (totalCovered / totalLayerLength) * 100
+              : 0;
           const planAvg = layerStatsList.length
             ? layerStatsList.reduce((sum, item) => sum + item.plan, 0) /
               layerStatsList.length
@@ -1876,7 +1931,7 @@
           $("#summaryTotal").innerHTML =
             `<div class="summary-hdr">Сводка по слоям</div>
        <div class="summary-meta">Общая протяжённость: <b>${fmtKm(total)} км</b> (${fmt(total)} ПК · ${metersLabel(total)})</div>
-       <div class="summary-overall">Общая выполненность объекта: <b>${objectPct.toFixed(1)}%</b></div>
+       <div class="summary-overall">Общая выполненность объекта: <b>${objectPct.toFixed(1)}%</b><span class="summary-help" tabindex="0" role="img" aria-label="Как считается общая выполненность" data-tooltip="Общая уложенная длина всех слоёв ÷ общая длина всех слоёв × 100%.">?</span></div>
        <div class="summary-meta">Средний план по слоям: <b>${planAvg.toFixed(1)}%</b></div>
        <div class="summary-grid">${rows}</div>`;
           const entries = (activeProject().journal || []).slice(0, 8).map((item) => `<div class="summary-row"><span>${item.date}</span><span><b>${item.action}</b> · ${item.detail || ""}</span></div>`).join("");
