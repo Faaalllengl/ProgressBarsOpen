@@ -36,39 +36,38 @@ def _project_state(data):
     return (project or projects[0]).get("state", {}) if projects else {}
 
 
-def _validate_segment(seg, total, label):
+def _validate_segment(seg, start, total, label):
     if not isinstance(seg, dict):
         raise ValueError(f"{label}: участок должен быть объектом")
     try:
-        start, end = float(seg["s"]), float(seg["e"])
+        segment_start, end = float(seg["s"]), float(seg["e"])
     except (KeyError, TypeError, ValueError):
         raise ValueError(f"{label}: нужны числовые значения «от» и «до»")
-    if not (0 <= start < end <= total):
-        raise ValueError(f"{label}: участок должен быть в пределах 0 — {total} ПК, при этом «до» больше «от»")
+    if not (start <= segment_start < end <= total):
+        raise ValueError(f"{label}: участок должен быть в пределах {start} — {total} ПК, при этом «до» больше «от»")
 
 
 def _validate_state(state):
     if not isinstance(state, dict) or not isinstance(state.get("layers"), list):
         raise ValueError("ожидается объект с полем layers")
     try:
+        start = float(state.get("start", 0))
         total = float(state["total"])
     except (KeyError, TypeError, ValueError):
         raise ValueError("нужна положительная общая протяжённость")
-    if total <= 0:
+    if start < 0 or total <= start:
         raise ValueError("общая протяжённость должна быть положительной")
     for layer in state["layers"]:
         if not isinstance(layer, dict) or not str(layer.get("name", "")).strip():
             raise ValueError("у каждого слоя должно быть название")
+        try:
+            excluded = float(layer.get("excludedPk", 0) or 0)
+        except (TypeError, ValueError):
+            raise ValueError(f"слой «{layer['name']}»: исключение из расчёта должно быть числом")
+        if excluded < 0 or excluded > total - start:
+            raise ValueError(f"слой «{layer['name']}»: исключение из расчёта должно быть от 0 до {total - start} ПК")
         for index, segment in enumerate(layer.get("segments", []), 1):
-            _validate_segment(segment, total, f"слой «{layer['name']}», участок {index}")
-    bridge = state.get("bridge", {})
-    if bridge:
-        start, end = float(bridge.get("start", 275.78)), float(bridge.get("end", 277.92))
-        for layer in bridge.get("layers", []):
-            for index, segment in enumerate(layer.get("segments", []), 1):
-                _validate_segment(segment, end, f"мост, слой «{layer.get('name', '')}», участок {index}")
-                if float(segment["s"]) < start:
-                    raise ValueError(f"мост, участок {index}: начало не может быть раньше ПК {start}")
+            _validate_segment(segment, start, total, f"слой «{layer['name']}», участок {index}")
 
 
 def _validate_data(data):
@@ -109,13 +108,18 @@ def _export_excel(data):
     workbook = Workbook()
     summary = workbook.active
     summary.title = "Сводка"
-    summary.append(["Объект", "Протяжённость, ПК", "Слой", "Готово, ПК", "План, %", "Дата плана", "Факт, %", "Отклонение, п.п."])
+    summary.append(["Объект", "ПК от", "ПК до", "Длина слоя, ПК", "Исключено, ПК", "Слой", "Готово, ПК", "План, %", "Дата плана", "Факт, %", "Отклонение, п.п."])
     project_name = next((p.get("name") for p in data.get("projects", []) if p.get("id") == data.get("activeProjectId")), "Основной объект")
     for layer in state.get("layers", []):
         covered = sum(max(0, s["e"] - s["s"]) for s in layer.get("segments", []))
-        actual = round(covered / state["total"] * 100, 1) if state["total"] else 0
+        start = float(state.get("start", 0))
+        end = float(state["total"])
+        route_length = max(0, end - start)
+        excluded = min(route_length, max(0, float(layer.get("excludedPk", 0) or 0)))
+        layer_length = max(0, route_length - excluded)
+        actual = round(covered / layer_length * 100, 1) if layer_length else 0
         plan = float(layer.get("planPercent", 0))
-        summary.append([project_name, state["total"], layer.get("name"), covered, plan, layer.get("planDate", ""), actual, actual - plan])
+        summary.append([project_name, start, end, route_length, excluded, layer.get("name"), covered, plan, layer.get("planDate", ""), actual, actual - plan])
     segments = workbook.create_sheet("Участки")
     segments.append(["Слой", "От, ПК", "До, ПК", "Длина, ПК", "Статус", "Ответственный", "Дата", "Комментарий", "Качество"])
     for layer in state.get("layers", []):

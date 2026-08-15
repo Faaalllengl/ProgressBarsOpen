@@ -1303,7 +1303,9 @@
           <div class="meta">
             <div>Общая протяжённость: <b id="totalDisplay">—</b></div>
             <div class="len-edit">
-              <span>ПК до</span>
+              <span>ПК от</span>
+              <input type="number" id="startInput" step="0.01" min="0" />
+              <span>до</span>
               <input type="number" id="totalInput" step="0.01" min="0.01" />
               <span>(1 ПК = 100 м)</span>
             </div>
@@ -1311,7 +1313,7 @@
         </div>
 
         <div class="control-panel">
-          <div><label>Объект <select id="projectSelect"></select></label> <button class="small-btn" id="addProjectBtn">+ объект</button> <button class="small-btn" id="renameProjectBtn">переименовать</button></div>
+          <div><label>Объект <select id="projectSelect"></select></label> <button class="small-btn" id="addProjectBtn">+ объект</button> <button class="small-btn" id="renameProjectBtn">переименовать</button> <button class="small-btn del-btn" id="deleteProjectBtn">удалить</button></div>
           <div><label>Фильтр <select id="layerFilter"><option value="all">все слои</option><option value="incomplete">незавершённые</option><option value="behind">отстающие от плана</option></select></label> <label>Найти ПК <input id="pkSearch" type="number" step="0.01" placeholder="например 275,8"></label> <button class="small-btn" id="pkSearchBtn">найти</button></div>
         </div>
 
@@ -1354,10 +1356,8 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
       (function () {
+        const DEFAULT_START = 0;
         const DEFAULT_TOTAL = 358.79;
-        const BRIDGE_START = 275.78;
-        const BRIDGE_END = 277.92;
-        const BRIDGE_LEN_PK = BRIDGE_END - BRIDGE_START; // 2.14 ПК = 214 м
         const DEFAULT_LAYERS = [
           {
             id: "shma",
@@ -1474,34 +1474,32 @@
             0,
           );
         }
-        function layerStats(layer, total) {
+        function layerStats(layer, start, end) {
+          const routeLength = Math.max(0, end - start);
+          const excluded = Math.min(
+            routeLength,
+            Math.max(0, Number(layer.excludedPk) || 0),
+          );
+          const total = Math.max(0, routeLength - excluded);
           const covered = layerCovered(layer);
           const remaining = Math.max(0, total - covered);
           const pct = total > 0 ? (covered / total) * 100 : 0;
-          return { covered, remaining, pct };
+          return { covered, remaining, total, excluded, pct };
         }
-        function displayLayerStats(layer, total) {
-          if (layer.id === "shma") return layerStats(layer, total);
-          const effectiveTotal = Math.max(0, total - BRIDGE_LEN_PK);
-          const covered = layerCovered(layer);
-          const remaining = Math.max(0, effectiveTotal - covered);
-          const pct =
-            effectiveTotal > 0 ? (covered / effectiveTotal) * 100 : 0;
-          return { covered, remaining, pct };
+        function displayLayerStats(layer, start, end) {
+          return layerStats(layer, start, end);
         }
-        function overallStats(layers, total) {
-          const covered = layers.reduce(
-            (sum, layer) => sum + displayLayerStats(layer, total).covered,
-            0,
+        function overallStats(layers, start, end) {
+          const totals = layers.reduce(
+            (result, layer) => {
+              const stats = displayLayerStats(layer, start, end);
+              result.covered += stats.covered;
+              result.totalLength += stats.total;
+              return result;
+            },
+            { covered: 0, totalLength: 0 },
           );
-          const totalLength = layers.reduce(
-            (sum, layer) =>
-              sum +
-              (layer.id === "shma"
-                ? total
-                : Math.max(0, total - BRIDGE_LEN_PK)),
-            0,
-          );
+          const { covered, totalLength } = totals;
           const remaining = Math.max(0, totalLength - covered);
           const pct = totalLength > 0 ? (covered / totalLength) * 100 : 0;
           return { covered, remaining, totalLength, pct };
@@ -1543,17 +1541,17 @@
         function sortedSegments(layer) {
           return layer.segments.slice().sort((a, b) => a.s - b.s);
         }
-        function hasInvalidSegments(layer, total) {
+        function hasInvalidSegments(layer, start, total) {
           const ordered = sortedSegments(layer);
           for (let i = 0; i < ordered.length; i++) {
             const seg = ordered[i];
-            if (!Number.isFinite(seg.s) || !Number.isFinite(seg.e) || seg.s < 0 || seg.e > total || seg.e <= seg.s) return "Участок должен быть в пределах трассы, а «до» — больше «от».";
+            if (!Number.isFinite(seg.s) || !Number.isFinite(seg.e) || seg.s < start || seg.e > total || seg.e <= seg.s) return "Участок должен быть в пределах трассы, а «до» — больше «от».";
             if (i && seg.s < ordered[i - 1].e - 0.001) return "Участки одного слоя не должны пересекаться.";
           }
           return "";
         }
         function commitLayer(layer, before, action) {
-          const error = hasInvalidSegments(layer, state.total);
+          const error = hasInvalidSegments(layer, state.start, state.total);
           if (error) { layer.segments = before; alert(error); return false; }
           journal(action, layer.name);
           renderRuler(); renderLayers(); scheduleSave(); return true;
@@ -1609,9 +1607,12 @@
 
         function defaultState() {
           return {
+            start: DEFAULT_START,
             total: DEFAULT_TOTAL,
-            layers: JSON.parse(JSON.stringify(DEFAULT_LAYERS)),
-            bridge: defaultBridgeState(),
+            layers: JSON.parse(JSON.stringify(DEFAULT_LAYERS)).map((layer) => ({
+              ...layer,
+              excludedPk: 0,
+            })),
           };
         }
 
@@ -1626,6 +1627,18 @@
         function normalizeProject(project, fallbackName) {
           const safe = project && typeof project === "object" ? project : {};
           const state = isValidState(safe.state) ? safe.state : defaultState();
+          if (!Number.isFinite(state.start)) state.start = DEFAULT_START;
+          if (!Number.isFinite(state.total) || state.total <= state.start) {
+            state.start = DEFAULT_START;
+            state.total = DEFAULT_TOTAL;
+          }
+          state.layers.forEach((layer) => {
+            if (!Number.isFinite(layer.excludedPk)) {
+              layer.excludedPk =
+                safe.id === "project_main" && layer.id !== "shma" ? 2.14 : 0;
+            }
+            layer.excludedPk = Math.max(0, layer.excludedPk);
+          });
           return {
             id: String(safe.id || fallbackName || "project_" + Date.now()),
             name: String(safe.name || fallbackName || "Объект").trim() || "Объект",
@@ -1651,7 +1664,7 @@
           const project = workspace.projects.find((p) => p.id === workspace.activeProjectId) || workspace.projects[0];
           workspace.activeProjectId = project.id;
           state = project.state;
-          ensureBridgeState();
+          if (!Number.isFinite(state.start)) state.start = DEFAULT_START;
           return project;
         }
         function activeProject() { return workspace.projects.find((p) => p.id === workspace.activeProjectId); }
@@ -1762,41 +1775,46 @@
         }
 
         function renderRuler() {
-          const total = state.total;
+          const start = state.start;
+          const end = state.total;
+          const length = Math.max(0, end - start);
           let majorStep = 50;
-          if (total <= 60) majorStep = 5;
-          else if (total <= 150) majorStep = 10;
-          else if (total <= 400) majorStep = 25;
+          if (length <= 60) majorStep = 5;
+          else if (length <= 150) majorStep = 10;
+          else if (length <= 400) majorStep = 25;
           else majorStep = 50;
           const minorStep = majorStep / 5;
           const labelMinGap = majorStep * 0.45;
 
           let html = "";
-          for (let pk = 0; pk <= total + 0.001; pk += minorStep) {
-            const pct = (Math.min(pk, total) / total) * 100;
-            const isMajor = Math.abs(pk % majorStep) < 0.001 || pk === 0;
+          for (let pk = start; pk <= end + 0.001; pk += minorStep) {
+            const pct = length > 0 ? ((Math.min(pk, end) - start) / length) * 100 : 0;
+            const offset = pk - start;
+            const isMajor = Math.abs(offset % majorStep) < 0.001 || offset === 0;
             html += `<div class="tick${isMajor ? " major" : ""}" style="left:${pct}%;height:${isMajor ? 12 : 6}px"></div>`;
             if (isMajor) {
-              const tooCloseToEnd = pk > 0 && total - pk < labelMinGap;
+              const tooCloseToEnd = pk > start && end - pk < labelMinGap;
               if (!tooCloseToEnd) {
                 html += `<div class="tick-label" style="left:${pct}%">${Math.round(pk)}</div>`;
               }
             }
           }
 
-          const endOnMajor = Math.abs(total % majorStep) < 0.01;
+          const endOnMajor = Math.abs(length % majorStep) < 0.01;
           if (!endOnMajor) {
             html += `<div class="tick major" style="left:100%;height:12px"></div>`;
           }
-          html += `<div class="tick-label end" style="left:100%">${fmt(total)}</div>`;
+          html += `<div class="tick-label end" style="left:100%">${fmt(end)}</div>`;
           rulerEl.innerHTML = html;
         }
 
         function renderLayers() {
+          const start = state.start;
           const total = state.total;
+          const length = Math.max(0, total - start);
           layersEl.innerHTML = "";
           state.layers.forEach((layer) => {
-            const stats = displayLayerStats(layer, total);
+            const stats = displayLayerStats(layer, start, total);
             const filter = $("#layerFilter").value;
             if ((filter === "incomplete" && stats.pct >= 99.999) || (filter === "behind" && stats.pct >= (layer.planPercent || 0))) return;
 
@@ -1814,10 +1832,10 @@
           <div class="track" data-toggle="${layer.id}">
             ${layer.segments
               .map((seg) => {
-                const left = Math.max(0, Math.min(100, (seg.s / total) * 100));
+                const left = length > 0 ? Math.max(0, Math.min(100, ((seg.s - start) / length) * 100)) : 0;
                 const width = Math.max(
                   0.15,
-                  Math.min(100 - left, ((seg.e - seg.s) / total) * 100),
+                  Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0),
                 );
                 return `<div class="seg" title="${fmt(seg.s)} — ${fmt(seg.e)} ПК (${fmtKm(seg.e - seg.s)} км)"
                 style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
@@ -1874,6 +1892,11 @@
         <span>на дату</span>
         <input type="date" value="${normalizeDateValue(layer.planDate || "")}" data-plan-date-layer="${layer.id}" title="Дата, к которой относится план">
       </div>
+      <div class="seg-row">
+        Не учитывать в расчёте:
+        <input type="number" inputmode="decimal" min="0" step="0.01" value="${Number(layer.excludedPk) || 0}" data-excluded-layer="${layer.id}" title="Длина, которая не участвует в расчёте процента этого слоя">
+        ПК
+      </div>
       ${rows || '<div class="seg-row" style="color:var(--text-faint)">участков пока нет</div>'}
       <div class="add-row">
         <input type="number" inputmode="decimal" step="0.01" placeholder="от" style="width:78px" id="new-s-${layer.id}" title="Начало нового участка">
@@ -1911,6 +1934,15 @@
             const layer = state.layers.find((l) => l.id === inp.dataset.planDateLayer);
             layer.planDate = normalizeDateValue(inp.value);
             journal("Изменена дата плана", layer.name); renderSummary(); scheduleSave();
+          }));
+          layersEl.querySelectorAll("[data-excluded-layer]").forEach((inp) => inp.addEventListener("change", () => {
+            const layer = state.layers.find((l) => l.id === inp.dataset.excludedLayer);
+            const routeLength = Math.max(0, state.total - state.start);
+            const value = parseFloat(inp.value);
+            layer.excludedPk = Number.isFinite(value) ? Math.max(0, Math.min(routeLength, value)) : 0;
+            journal("Изменено исключение из расчёта", layer.name);
+            renderLayers();
+            scheduleSave();
           }));
           layersEl.querySelectorAll("[data-del-layer]").forEach((btn) => {
               btn.addEventListener("click", () => {
@@ -1961,13 +1993,15 @@
         }
 
         function renderSummary() {
+          const start = state.start;
           const total = state.total;
+          const length = Math.max(0, total - start);
           const layerStatsList = state.layers.map((layer) => ({
             layer,
-            stats: displayLayerStats(layer, total),
+            stats: displayLayerStats(layer, start, total),
             plan: layer.planPercent || 0,
           }));
-          const objectPct = overallStats(state.layers, total).pct;
+          const objectPct = overallStats(state.layers, start, total).pct;
           const planAvg = layerStatsList.length
             ? layerStatsList.reduce((sum, item) => sum + item.plan, 0) /
               layerStatsList.length
@@ -1986,8 +2020,8 @@
 
           $("#summaryTotal").innerHTML =
             `<div class="summary-hdr">Сводка по слоям</div>
-       <div class="summary-meta">Общая протяжённость: <b>${fmtKm(total)} км</b> (${fmt(total)} ПК · ${metersLabel(total)})</div>
-       <div class="summary-overall">Общая выполненность объекта: <b>${objectPct.toFixed(1)}%</b><span class="summary-help" tabindex="0" role="img" aria-label="Как считается общая выполненность" data-tooltip="Общая уложенная длина всех слоёв ÷ общая длина всех слоёв × 100%.">?</span></div>
+       <div class="summary-meta">Общая протяжённость: <b>${fmtKm(length)} км</b> (ПК ${fmt(start)} — ${fmt(total)} · ${metersLabel(length)})</div>
+       <div class="summary-overall">Общая выполненность объекта: <b>${objectPct.toFixed(1)}%</b><span class="summary-help" tabindex="0" role="img" aria-label="Как считается общая выполненность" data-tooltip="Общая уложенная длина слоёв ÷ сумму длин слоёв после индивидуальных исключений × 100%.">?</span></div>
        <div class="summary-meta">Средний план по слоям: <b>${planAvg.toFixed(1)}%</b></div>
        <div class="summary-grid">${rows}</div>`;
           const entries = (activeProject().journal || []).slice(0, 8).map((item) => `<div class="summary-row"><span>${item.date}</span><span><b>${item.action}</b> · ${item.detail || ""}</span></div>`).join("");
@@ -2183,26 +2217,28 @@
           attachBridgeEditorHandlers();
         }
 
-        function buildPdfRulerHtml(total) {
+        function buildPdfRulerHtml(start, total) {
+          const length = Math.max(0, total - start);
           let majorStep = 50;
-          if (total <= 60) majorStep = 5;
-          else if (total <= 150) majorStep = 10;
-          else if (total <= 400) majorStep = 25;
+          if (length <= 60) majorStep = 5;
+          else if (length <= 150) majorStep = 10;
+          else if (length <= 400) majorStep = 25;
           else majorStep = 50;
           const minorStep = majorStep / 5;
           const labelMinGap = majorStep * 0.45;
           let html = '<div class="pdf-ruler">';
-          for (let pk = 0; pk <= total + 0.001; pk += minorStep) {
-            const pct = (Math.min(pk, total) / total) * 100;
-            const isMajor = Math.abs(pk % majorStep) < 0.001 || pk === 0;
+          for (let pk = start; pk <= total + 0.001; pk += minorStep) {
+            const pct = length > 0 ? ((Math.min(pk, total) - start) / length) * 100 : 0;
+            const offset = pk - start;
+            const isMajor = Math.abs(offset % majorStep) < 0.001 || offset === 0;
             html += `<div class="pdf-tick" style="left:${pct}%;height:${isMajor ? 10 : 5}px"></div>`;
             if (isMajor) {
-              const tooCloseToEnd = pk > 0 && total - pk < labelMinGap;
+              const tooCloseToEnd = pk > start && total - pk < labelMinGap;
               if (!tooCloseToEnd)
                 html += `<div class="pdf-tick-label" style="left:${pct}%">${Math.round(pk)}</div>`;
             }
           }
-          if (Math.abs(total % majorStep) >= 0.01) {
+          if (Math.abs(length % majorStep) >= 0.01) {
             html +=
               '<div class="pdf-tick" style="left:100%;height:10px"></div>';
           }
@@ -2211,17 +2247,19 @@
         }
 
         function buildPdfReportElement() {
+          const start = state.start;
           const total = state.total;
-          const overall = overallStats(state.layers, total);
-          let chartHtml = buildPdfRulerHtml(total);
+          const length = Math.max(0, total - start);
+          const overall = overallStats(state.layers, start, total);
+          let chartHtml = buildPdfRulerHtml(start, total);
           state.layers.forEach((layer) => {
-            const stats = displayLayerStats(layer, total);
+            const stats = displayLayerStats(layer, start, total);
             const segs = layer.segments
               .map((seg) => {
-                const left = Math.max(0, Math.min(100, (seg.s / total) * 100));
+                const left = length > 0 ? Math.max(0, Math.min(100, ((seg.s - start) / length) * 100)) : 0;
                 const width = Math.max(
                   0.15,
-                  Math.min(100 - left, ((seg.e - seg.s) / total) * 100),
+                  Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0),
                 );
                 return `<div class="pdf-seg" style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
               })
@@ -2235,59 +2273,7 @@
 
           const tableRows = state.layers
             .map((layer) => {
-              const stats = displayLayerStats(layer, total);
-              const segList =
-                sortedSegments(layer)
-                  .map(
-                    (seg) =>
-                      `${fmt(seg.s)}–${fmt(seg.e)} (${fmtKm(seg.e - seg.s)} км)`,
-                  )
-                  .join("; ") || "—";
-              return `<tr>
-        <td><b>${layer.name}</b></td>
-        <td>${stats.pct.toFixed(1)}%</td>
-        <td>${fmtKm(stats.covered)} км</td>
-        <td>${fmtKm(stats.remaining)} км</td>
-        <td>${segList}</td>
-      </tr>`;
-            })
-            .join("");
-
-          ensureBridgeState();
-          const bridgeTotal = BRIDGE_LEN_PK;
-          let bridgeChartHtml =
-            `<h2 style="font-size:14px;margin:20px 0 8px">Участок моста (ПК ${fmt(BRIDGE_START)} — ${fmt(BRIDGE_END)}, ${metersLabel(BRIDGE_LEN_PK)})</h2>`;
-          bridgeChartHtml += buildPdfBridgeRulerHtml();
-          state.bridge.layers.forEach((layer) => {
-            const stats = layerStats(layer, bridgeTotal);
-            const segs = layer.segments
-              .map((seg) => {
-                const relS = seg.s - BRIDGE_START;
-                const relE = seg.e - BRIDGE_START;
-                const left = Math.max(
-                  0,
-                  Math.min(100, (relS / bridgeTotal) * 100),
-                );
-                const width = Math.max(
-                  0.15,
-                  Math.min(
-                    100 - left,
-                    ((relE - relS) / bridgeTotal) * 100,
-                  ),
-                );
-                return `<div class="pdf-seg" style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
-              })
-              .join("");
-            bridgeChartHtml += `
-        <div class="pdf-row">
-          <div class="pdf-label"><b>${layer.name}</b><br>${stats.pct.toFixed(1)}% · ${fmtKm(stats.covered)} км<br>ост. ${fmtKm(stats.remaining)} км</div>
-          <div class="pdf-track-wrap"><div class="pdf-track">${segs}</div></div>
-        </div>`;
-          });
-
-          const bridgeTableRows = state.bridge.layers
-            .map((layer) => {
-              const stats = layerStats(layer, bridgeTotal);
+              const stats = displayLayerStats(layer, start, total);
               const segList =
                 sortedSegments(layer)
                   .map(
@@ -2309,7 +2295,7 @@
           el.className = "pdf-report";
           el.innerHTML = `
       <h1>Прогресс укладки слоёв</h1>
-      <div class="pdf-sub">Дата: ${reportDate()} · Протяжённость: ${fmtKm(total)} км (${fmt(total)} ПК · ${metersLabel(total)})</div>
+      <div class="pdf-sub">Дата: ${reportDate()} · Протяжённость: ${fmtKm(length)} км (ПК ${fmt(start)} — ${fmt(total)} · ${metersLabel(length)})</div>
       <div class="pdf-overall">
         <div class="pdf-overall-main">
           <div class="pdf-overall-title">Общая выполненность объекта</div>
@@ -2329,15 +2315,7 @@
         <tr><th>Слой</th><th>%</th><th>Выполнено</th><th>Осталось</th><th>Участки (ПК)</th></tr>
         ${tableRows}
       </table>
-      <div class="pdf-chart">${bridgeChartHtml}</div>
-      <table>
-        <tr><th colspan="5">Мост (ПК ${fmt(BRIDGE_START)} — ${fmt(BRIDGE_END)})</th></tr>
-        <tr><th>Слой</th><th>%</th><th>Выполнено</th><th>Осталось</th><th>Участки (ПК)</th></tr>
-        ${bridgeTableRows}
-      </table>
       <div class="pdf-foot">1 пикет (ПК) = 100 м. Отчёт для печати.</div>`;
-          el.children[5]?.remove();
-          el.children[5]?.remove();
           return el;
         }
 
@@ -2459,9 +2437,11 @@
           const select = $("#projectSelect");
           select.innerHTML = workspace.projects.map((project) => `<option value="${project.id}">${project.name}</option>`).join("");
           select.value = workspace.activeProjectId;
+          $("#startInput").value = state.start;
           $("#totalInput").value = state.total;
+          const length = Math.max(0, state.total - state.start);
           $("#totalDisplay").textContent =
-            fmt(state.total) + " ПК (" + metersLabel(state.total) + ")";
+            "ПК " + fmt(state.start) + " — " + fmt(state.total) + " (" + metersLabel(length) + ")";
           renderRuler();
           renderLayers();
         }
@@ -2489,12 +2469,32 @@
         }
 
 
+        $("#startInput").addEventListener("change", (e) => {
+          const val = parseFloat(e.target.value);
+          const hasOutsideSegments = state.layers.some((layer) =>
+            layer.segments.some((seg) => seg.s < val || seg.e > state.total),
+          );
+          if (!isNaN(val) && val >= 0 && val < state.total && !hasOutsideSegments) {
+            state.start = val;
+            render();
+            scheduleSave();
+          } else {
+            if (hasOutsideSegments) alert("Нельзя сдвинуть начало: существующие участки выйдут за пределы объекта.");
+            render();
+          }
+        });
         $("#totalInput").addEventListener("change", (e) => {
           const val = parseFloat(e.target.value);
-          if (!isNaN(val) && val > 0) {
+          const hasOutsideSegments = state.layers.some((layer) =>
+            layer.segments.some((seg) => seg.s < state.start || seg.e > val),
+          );
+          if (!isNaN(val) && val > state.start && !hasOutsideSegments) {
             state.total = val;
             render();
             scheduleSave();
+          } else {
+            if (hasOutsideSegments) alert("Нельзя изменить конец: существующие участки выйдут за пределы объекта.");
+            render();
           }
         });
 
@@ -2507,7 +2507,7 @@
             return;
           }
           const id = "layer_" + Date.now();
-          state.layers.push({ id, name, color: colorInp.value, segments: [] });
+          state.layers.push({ id, name, color: colorInp.value, segments: [], excludedPk: 0 });
           journal("Добавлен слой", name);
           nameInp.value = "";
           openEditorId = id;
@@ -2526,9 +2526,26 @@
         $("#projectSelect").addEventListener("change", (e) => { workspace.activeProjectId = e.target.value; selectActiveProject(); openEditorId = null; render(); scheduleSave(); });
         $("#addProjectBtn").addEventListener("click", () => { const name = prompt("Название нового объекта:"); if (!name || !name.trim()) return; const project = newProject(name.trim()); workspace.projects.push(project); workspace.activeProjectId = project.id; selectActiveProject(); journal("Создан объект", project.name); render(); scheduleSave(); });
         $("#renameProjectBtn").addEventListener("click", () => { const project = activeProject(); const name = prompt("Название объекта:", project.name); if (!name || !name.trim()) return; project.name = name.trim(); journal("Переименован объект", project.name); render(); scheduleSave(); });
+        $("#deleteProjectBtn").addEventListener("click", () => {
+          const project = activeProject();
+          if (!project || workspace.projects.length <= 1) {
+            alert("Нельзя удалить последний объект.");
+            return;
+          }
+          if (!confirm(`Удалить объект «${project.name}» вместе со всеми его данными?`)) return;
+          const index = workspace.projects.findIndex((item) => item.id === project.id);
+          workspace.projects.splice(index, 1);
+          workspace.activeProjectId = workspace.projects[Math.max(0, index - 1)].id;
+          selectActiveProject();
+          openEditorId = null;
+          openBridgeEditorId = null;
+          render();
+          scheduleSave();
+        });
         $("#pkSearchBtn").addEventListener("click", () => { const pk = parseFloat($("#pkSearch").value); if (!Number.isFinite(pk)) return; let found = null; state.layers.forEach((layer) => layer.segments.forEach((seg) => { if (pk >= seg.s && pk <= seg.e) found = layer.id; })); if (!found) return alert("На этом ПК нет выполненного участка."); openEditorId = found; renderLayers(); const row = layersEl.querySelector(`.editor[data-layer-id="${found}"]`); if (row) row.scrollIntoView({behavior:"smooth", block:"center"}); });
         $("#newLayerName").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#addLayerBtn").click(); } });
         $("#pkSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#pkSearchBtn").click(); } });
+        $("#startInput").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
         $("#totalInput").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
         $("#road-app").addEventListener("keydown", (e) => {
           if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {

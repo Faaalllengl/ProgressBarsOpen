@@ -8,11 +8,6 @@ from io import BytesIO
 from docx import Document
 from docx.shared import Cm, Pt
 
-BRIDGE_START = 275.78
-BRIDGE_END = 277.92
-BRIDGE_LEN_PK = BRIDGE_END - BRIDGE_START
-
-
 def _fmt(value: float) -> str:
     return f"{round(value, 2):.2f}".replace(".", ",")
 
@@ -26,8 +21,11 @@ def _covered(layer: dict) -> float:
     return sum(max(0.0, float(s["e"]) - float(s["s"])) for s in layer.get("segments", []))
 
 
-def _stats(layer: dict, total: float) -> tuple[float, float, float]:
+def _stats(layer: dict, start: float, end: float) -> tuple[float, float, float]:
     covered = _covered(layer)
+    route_length = max(0.0, end - start)
+    excluded = min(route_length, max(0.0, float(layer.get("excludedPk", 0) or 0)))
+    total = max(0.0, route_length - excluded)
     remaining = max(0.0, total - covered)
     return covered, remaining, covered / total * 100 if total else 0.0
 
@@ -53,7 +51,9 @@ def _add_table(document: Document, headers: list[str], rows: list[list[str]]):
 
 def build_word_document(data: dict) -> bytes:
     project_name, state = _active_project(data)
-    total = float(state["total"])
+    start = float(state.get("start", 0))
+    end = float(state["total"])
+    length = max(0.0, end - start)
     document = Document()
     section = document.sections[0]
     section.top_margin = section.bottom_margin = Cm(1.8)
@@ -65,12 +65,12 @@ def build_word_document(data: dict) -> bytes:
     document.add_paragraph(f"Объект: {project_name}")
     document.add_paragraph(f"Дата формирования: {datetime.now():%d.%m.%Y %H:%M}")
     document.add_heading("1. Общие сведения", level=1)
-    _add_table(document, ["Показатель", "Значение"], [["Протяжённость трассы", f"{_fmt(total)} ПК ({_meters(total)})"], ["Количество слоёв", str(len(state.get("layers", [])))]] )
+    _add_table(document, ["Показатель", "Значение"], [["Протяжённость трассы", f"ПК {_fmt(start)} — {_fmt(end)} ({_meters(length)})"], ["Количество слоёв", str(len(state.get("layers", [])))]] )
 
     document.add_heading("2. План и факт", level=1)
     summary_rows = []
     for layer in state.get("layers", []):
-        covered, remaining, actual = _stats(layer, total)
+        covered, remaining, actual = _stats(layer, start, end)
         plan = float(layer.get("planPercent", 0))
         plan_date = str(layer.get("planDate", "") or "")
         if len(plan_date) == 10:
@@ -83,7 +83,7 @@ def build_word_document(data: dict) -> bytes:
     document.add_heading("3. Участки, контроль и исполнители", level=1)
     for index, layer in enumerate(state.get("layers", []), 1):
         document.add_heading(f"3.{index}. {layer.get('name', '')}", level=2)
-        covered, remaining, actual = _stats(layer, total)
+        covered, remaining, actual = _stats(layer, start, end)
         document.add_paragraph(f"Выполнено: {actual:.1f}% ({_meters(covered)}). Осталось: {_meters(remaining)}.")
         segments = sorted(layer.get("segments", []), key=lambda item: item["s"])
         rows = []
@@ -93,15 +93,6 @@ def build_word_document(data: dict) -> bytes:
             _add_table(document, ["№", "От, ПК", "До, ПК", "Длина", "Статус", "Ответственный", "Дата", "Качество", "Комментарий"], rows)
         else:
             document.add_paragraph("Участки не указаны.")
-
-    bridge = state.get("bridge", {})
-    if False and bridge.get("layers"):
-        document.add_heading(f"4. Мост (ПК {_fmt(BRIDGE_START)} — {_fmt(BRIDGE_END)})", level=1)
-        bridge_rows = []
-        for layer in bridge["layers"]:
-            covered, remaining, actual = _stats(layer, BRIDGE_LEN_PK)
-            bridge_rows.append([layer.get("name", ""), f"{actual:.1f}%", _meters(covered), _meters(remaining)])
-        _add_table(document, ["Слой", "Факт", "Готово", "Осталось"], bridge_rows)
 
     document.add_paragraph("Отчёт сформирован автоматически. 1 ПК = 100 м.")
     output = BytesIO()
