@@ -1,0 +1,202 @@
+{
+  "segments": [
+    {
+      "id": "d5eac2eb-2b1f-4aa5-83e2-226b6a834997",
+      "start": 109.75,
+      "end": 114,
+      "startText": "ПК109,75",
+      "endText": "ПК114,00",
+      "sides": [
+        "left"
+      ],
+      "completed": false
+    },
+    {
+      "id": "c111e72a-37cb-47ca-8bda-cb547a4da557",
+      "start": 141.2,
+      "end": 144.8,
+      "startText": "ПК141,20",
+      "endText": "ПК144,80",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": false
+    },
+    {
+      "id": "f3788c44-7777-4834-a7fd-345221b478f8",
+      "start": 157.6,
+      "end": 161.85,
+      "startText": "ПК157,60",
+      "endText": "ПК161,85",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": false
+    },
+    {
+      "id": "bdcc8a34-050d-4e86-8b5a-77c720c417cb",
+      "start": 169.9,
+      "end": 179.2,
+      "startText": "ПК169,90",
+      "endText": "ПК179,20",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": false
+    },
+    {
+      "id": "5dcce583-f3b5-4ea2-9674-6127cb70ef9f",
+      "start": 204.8,
+      "end": 210.8,
+      "startText": "ПК204,80",
+      "endText": "ПК210,80",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": false
+    },
+    {
+      "id": "69f66b18-6eff-46ac-afe2-f4dac5c5263a",
+      "start": 226.73,
+      "end": 231,
+      "startText": "ПК226,73",
+      "endText": "ПК231,00",
+      "sides": [
+        "right"
+      ],
+      "completed": false
+    },
+    {
+      "id": "ce11c524-5aae-407e-8b7b-62d361a48a78",
+      "start": 233.6,
+      "end": 234.55,
+      "startText": "ПК233,60",
+      "endText": "ПК234,55",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": false
+    },
+    {
+      "id": "2096878b-85c0-42cf-9632-ed5f3825db4e",
+      "start": 238.9,
+      "end": 245,
+      "startText": "ПК238,90",
+      "endText": "ПК245,00",
+      "sides": [
+        "left"
+      ],
+      "completed": false
+    },
+    {
+      "id": "0962dba0-3a61-44fb-bfd1-f463d2fabdb5",
+      "start": 245.45,
+      "end": 250,
+      "startText": "ПК245,45",
+      "endText": "ПК250,00",
+      "sides": [
+        "right"
+      ],
+      "completed": false
+    },
+    {
+      "id": "c172394b-be01-4907-9729-4b683cca7a28",
+      "start": 250,
+      "end": 252.4,
+      "startText": "ПК250,00",
+      "endText": "ПК252,40",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": false
+    },
+    {
+      "id": "4aebb96b-b8d9-40fb-9456-5c7443dc03f3",
+      "start": 256,
+      "end": 268.2,
+      "startText": "ПК256,00",
+      "endText": "ПК268,20",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": true
+    },
+    {
+      "id": "4f0220c0-c423-46f7-8368-f4148198aab3",
+      "start": 268.8,
+      "end": 275.7,
+      "startText": "ПК268,80",
+      "endText": "ПК275,70",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": true
+    },
+    {
+      "id": "e3d21db4-b5a5-4e33-bccb-e52dc4299085",
+      "start": 278,
+      "end": 295.2,
+      "startText": "ПК278,00",
+      "endText": "ПК295,20",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": true
+    },
+    {
+      "id": "16007a24-bab5-4787-8127-4757b5fd5320",
+      "start": 296.37,
+      "end": 302.05,
+      "startText": "ПК296,37",
+      "endText": "ПК302,05",
+      "sides": [
+        "left"
+      ],
+      "completed": false
+    },
+    {
+      "id": "fe91f71b-fefb-4830-9d8a-0a4ef39cb6aa",
+      "start": 312.39,
+      "end": 315.8,
+      "startText": "ПК312,39",
+      "endText": "ПК315,80",
+      "sides": [
+        "right"
+      ],
+      "completed": false
+    },
+    {
+      "id": "a0fb2f79-b97a-4448-8fe7-39bb43feef11",
+      "start": 315.8,
+      "end": 319.2,
+      "startText": "ПК315,80",
+      "endText": "ПК319,20",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": false
+    },
+    {
+      "id": "9854b529-76e1-4c6c-8c03-345619c7965d",
+      "start": 330.6,
+      "end": 337.25,
+      "startText": "ПК330,60",
+      "endText": "ПК337,25",
+      "sides": [
+        "left",
+        "right"
+      ],
+      "completed": false
+    }
+  ]
+}

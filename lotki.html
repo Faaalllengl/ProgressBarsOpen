@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Лотки — контроль выполнения</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%2315171a'/%3E%3Crect x='4' y='14' width='24' height='4' fill='%23D71921'/%3E%3Crect x='4' y='14' width='14' height='4' fill='%236BC48C'/%3E%3C/svg%3E">
+  <style>
+    :root{color-scheme:dark;--ink:#e9e7e2;--muted:#9198a1;--faint:#5c636c;--line:#2e333b;--surface:#1c1f24;--surface2:#22262c;--raised:#262b31;--bg:#15171a;--accent:#d71921;--done:#6bc48c;--shadow:0 1px 0 rgba(0,0,0,.14)}
+    *{box-sizing:border-box}button,input{font:inherit}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Inter",Arial,sans-serif}.wrap{max-width:1240px;margin:auto;padding:28px 22px 48px}.hdr{display:flex;justify-content:space-between;gap:20px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:22px;margin-bottom:20px}.eyebrow{color:var(--accent);font:11px "JetBrains Mono",monospace;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px}h1{font-size:28px;line-height:1;margin:0}.meta{text-align:right;color:var(--muted)}.meta b{color:var(--ink);font-size:20px}.panel,.summary,.table-card{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:10px;padding:20px;margin:16px 0}.panel h2,.table-card h2{font-size:18px;margin:0 0 15px}.form-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}.field label{display:block;font-weight:700;margin-bottom:6px}.field input{width:100%;height:42px;background:var(--surface2);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:0 12px;font-size:16px}.field input:focus{outline:2px solid #8fb9ff;outline-offset:2px}.checks{display:flex;gap:18px;align-items:center;height:42px}.checks label{font-weight:400;margin:0;white-space:nowrap}.checks input{accent-color:var(--accent);width:17px;height:17px;vertical-align:middle}.btn{height:42px;border:1px solid var(--line);border-radius:5px;background:var(--surface2);color:var(--ink);padding:0 18px;cursor:pointer;font-weight:700}.btn:hover,.icon:hover{background:var(--raised)}.btn.red{background:var(--accent);border-color:var(--accent);color:#fff}.btn.light,.link{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.status{color:var(--muted);margin-left:auto}.error{color:var(--accent);min-height:20px;margin-top:8px}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.metric{padding:13px;background:var(--surface2);border-radius:5px}.metric small{display:block;color:var(--muted);text-transform:uppercase;font:10px "JetBrains Mono",monospace;letter-spacing:.08em}.metric strong{font-size:24px}.track-title{display:flex;justify-content:space-between;margin-bottom:8px;font-weight:700}.track{height:42px;display:flex;overflow:hidden;border-radius:5px;background:var(--surface2);border:1px solid var(--line)}.seg{min-width:4px;border-right:2px solid var(--surface);background:#424954;cursor:pointer;position:relative;transition:filter .15s}.seg.done{background:var(--done)}.seg:hover{filter:brightness(1.15)}.seg span{display:none}.empty{text-align:center;color:var(--muted);padding:24px}.lotki-tooltip{position:fixed;z-index:1000;max-width:min(320px,calc(100vw - 24px));padding:7px 9px;border:1px solid #3a4049;border-radius:5px;background:#111;color:#e9e7e2;box-shadow:0 8px 20px rgba(0,0,0,.28);font-size:11px;line-height:1.35;pointer-events:none;white-space:normal}.table-wrap{overflow:auto}.data-table{width:100%;border-collapse:collapse;min-width:720px}.data-table th,.data-table td{border-bottom:1px solid var(--line);padding:12px 10px;text-align:left;vertical-align:middle}.data-table th{font:11px "JetBrains Mono",monospace;text-transform:uppercase;color:var(--muted);letter-spacing:.06em}.data-table tr.done{background:rgba(107,196,140,.08)}.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:12px;background:var(--surface2);border:1px solid var(--line);color:var(--muted);cursor:pointer}.badge.done{background:rgba(107,196,140,.12);border-color:var(--done);color:var(--done)}.side{display:inline-block;margin:2px 4px 2px 0;padding:3px 8px;border-radius:4px;background:var(--surface2);font-size:12px}.actions{display:flex;gap:7px}.icon{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:5px;padding:7px 9px;cursor:pointer}.icon:hover{border-color:var(--accent);color:var(--accent)}.hint{color:var(--muted);font-size:12px;margin-top:14px}.invalid{border-color:var(--accent)!important}.nav{display:flex;gap:10px;margin-bottom:15px}.nav a{color:var(--muted);text-decoration:none}.nav a:hover{color:var(--ink);text-decoration:underline}@media(max-width:760px){.hdr{display:block}.meta{text-align:left;margin-top:14px}.form-grid{grid-template-columns:1fr 1fr}.form-grid .submit{grid-column:1/-1}.summary{grid-template-columns:1fr}h1{font-size:26px}.status{width:100%;margin-left:0}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <nav class="nav"><a href="road-progress.html">← Основной модуль</a></nav>
+    <header class="hdr"><div><div class="eyebrow">Водосток · Пикетаж</div><h1>Лотки</h1></div><div class="meta">Общая выполненность<br><b id="overall">0%</b></div></header>
+    <section class="panel">
+      <h2>Добавить отрезок</h2>
+      <form id="segmentForm" class="form-grid">
+        <div class="field"><label for="start">От ПК</label><input id="start" placeholder="например, ПК109,75" autocomplete="off"></div>
+        <div class="field"><label for="end">До ПК</label><input id="end" placeholder="например, ПК114,00" autocomplete="off"></div>
+        <div class="field"><label>Сторона дороги</label><div class="checks"><label><input type="checkbox" id="left"> Слева</label><label><input type="checkbox" id="right"> Справа</label></div></div>
+        <button class="btn red submit" type="submit">+ Добавить отрезок</button>
+      </form>
+      <div id="formError" class="error"></div>
+      <div class="hint">Можно вводить `109,75` или `ПК109,75`: это 109 ПК и 75 метров. Один ПК = 100 метров. Если выбраны обе стороны, длина отрезка учитывается дважды.</div>
+    </section>
+    <section class="summary"><div class="metric"><small>Отрезков</small><strong id="count">0</strong></div><div class="metric"><small>Общая длина</small><strong id="total">0 м</strong></div><div class="metric"><small>Выполнено</small><strong id="done">0 м</strong></div></section>
+    <section class="panel"><div class="track-title"><span>Прогресс выполнения</span><span id="trackLabel">0 из 0 м</span></div><div id="track" class="track"><div class="empty" style="width:100%;padding:10px">Добавьте первый отрезок</div></div><div class="hint">Нажмите на сегмент или статус в таблице, чтобы отметить отрезок выполненным.</div></section>
+    <section class="table-card"><h2>Отрезки лотков</h2><div id="table"></div></section>
+    <section class="panel"><div class="toolbar"><button class="btn light" id="pdf">Скачать отчёт PDF</button><button class="btn light" id="word">Скачать отчёт Word</button><button class="btn light" id="excel">Скачать Excel</button><span class="status" id="status">загрузка…</span></div></section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+    (() => {
+      let state = {segments:[]};
+      const $ = id => document.getElementById(id);
+      const esc = value => String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+      function parsePk(value){
+        const match = String(value).trim().toUpperCase().match(/^(?:ПК\s*)?(\d+)\s*,\s*(\d{1,2})(?:\s*,\s*\d+)?$/);
+        if(!match) return null;
+        const meters = Number(match[2]);
+        if(meters > 99) return null;
+        return Number(match[1]) + meters / 100;
+      }
+      function formatPk(value){
+        const meters = Math.round(Number(value) * 100);
+        return `ПК${Math.floor(meters/100)},${String(meters%100).padStart(2,'0')}`;
+      }
+      function lengthMeters(item){ return Math.max(0, (item.end-item.start)*100*Math.max(1,item.sides.length)); }
+      function save(){
+        return fetch('/api/lotki-data',{method:'POST',headers:{'Content-Type':'application/json; charset=utf-8'},body:JSON.stringify(state)})
+          .then(res => {if(!res.ok) throw new Error('save'); $('status').textContent='сохранено'; return res;})
+          .catch(() => {$('status').textContent='ошибка сохранения'; throw new Error('save');});
+      }
+      let tooltip;
+      function hideTooltip(){
+        tooltip?.remove();
+        tooltip=null;
+      }
+      function moveTooltip(event){
+        if(!tooltip)return;
+        const gap=14, rect=tooltip.getBoundingClientRect();
+        let left=event.clientX+gap, top=event.clientY+gap;
+        if(left+rect.width>window.innerWidth-8) left=event.clientX-rect.width-gap;
+        if(top+rect.height>window.innerHeight-8) top=event.clientY-rect.height-gap;
+        tooltip.style.left=`${Math.max(8,left)}px`; tooltip.style.top=`${Math.max(8,top)}px`;
+      }
+      function bindTooltips(){
+        document.querySelectorAll('.seg[data-tooltip]').forEach(segment=>{
+          segment.addEventListener('mouseenter',event=>{tooltip=document.createElement('div');tooltip.className='lotki-tooltip';tooltip.textContent=segment.dataset.tooltip;document.body.appendChild(tooltip);moveTooltip(event);});
+          segment.addEventListener('mousemove',moveTooltip);
+          segment.addEventListener('mouseleave',hideTooltip);
+        });
+      }
+      function render(){
+        hideTooltip();
+        const segments = state.segments;
+        const total = segments.reduce((sum,item)=>sum+lengthMeters(item),0);
+        const done = segments.reduce((sum,item)=>sum+(item.completed?lengthMeters(item):0),0);
+        const percent = total ? done/total*100 : 0;
+        $('count').textContent=segments.length; $('total').textContent=`${Math.round(total).toLocaleString('ru-RU')} м`; $('done').textContent=`${Math.round(done).toLocaleString('ru-RU')} м`; $('overall').textContent=`${percent.toFixed(1)}%`; $('trackLabel').textContent=`${Math.round(done).toLocaleString('ru-RU')} из ${Math.round(total).toLocaleString('ru-RU')} м`;
+        $('track').innerHTML = segments.length ? segments.map((item,index)=>`<div class="seg ${item.completed?'done':''}" style="width:${total?lengthMeters(item)/total*100:0}%" data-toggle="${index}" data-tooltip="${esc(item.startText)} — ${esc(item.endText)} · ${Math.round(lengthMeters(item)).toLocaleString('ru-RU')} м · ${item.completed?'Выполнен':'Не выполнен'}"></div>`).join('') : '<div class="empty" style="width:100%;padding:10px">Добавьте первый отрезок</div>';
+        bindTooltips();
+        $('table').innerHTML = segments.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>№</th><th>От ПК</th><th>До ПК</th><th>Сторона</th><th>Длина</th><th>Статус</th><th></th></tr></thead><tbody>${segments.map((item,index)=>`<tr class="${item.completed?'done':''}"><td>${index+1}</td><td>${esc(item.startText)}</td><td>${esc(item.endText)}</td><td>${item.sides.includes('left')?'<span class="side">Слева</span>':''}${item.sides.includes('right')?'<span class="side">Справа</span>':''}</td><td>${Math.round(lengthMeters(item)).toLocaleString('ru-RU')} м</td><td><button class="badge ${item.completed?'done':''}" data-toggle="${index}">${item.completed?'Выполнен':'Не выполнен'}</button></td><td><div class="actions"><button class="icon" data-edit="${index}" title="Изменить">Изменить</button><button class="icon" data-delete="${index}" title="Удалить">Удалить</button></div></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Отрезки ещё не добавлены.</div>';
+        document.querySelectorAll('[data-toggle]').forEach(el=>el.addEventListener('click',()=>{const i=Number(el.dataset.toggle);state.segments[i].completed=!state.segments[i].completed;render();save();}));
+        document.querySelectorAll('[data-delete]').forEach(el=>el.addEventListener('click',()=>{const i=Number(el.dataset.delete);if(confirm('Удалить этот отрезок?')){state.segments.splice(i,1);render();save();}}));
+        document.querySelectorAll('[data-edit]').forEach(el=>el.addEventListener('click',()=>editSegment(Number(el.dataset.edit))));
+      }
+      function editSegment(index){
+        const item=state.segments[index]; const start=prompt('От ПК',item.startText); if(start===null)return; const end=prompt('До ПК',item.endText); if(end===null)return; const parsedStart=parsePk(start),parsedEnd=parsePk(end); if(parsedStart===null||parsedEnd===null||parsedEnd<=parsedStart){alert('Введите корректный диапазон в формате 109,75.');return;} state.segments[index]={...item,start:parsedStart,end:parsedEnd,startText:formatPk(parsedStart),endText:formatPk(parsedEnd)};render();save();
+      }
+      $('segmentForm').addEventListener('submit',event=>{event.preventDefault();$('formError').textContent='';const startText=$('start').value,endText=$('end').value,start=parsePk(startText),end=parsePk(endText),sides=[];if($('left').checked)sides.push('left');if($('right').checked)sides.push('right');if(start===null||end===null){$('formError').textContent='Проверьте формат: например, 109,75.';return}if(end<=start){$('formError').textContent='Конечное значение должно быть больше начального.';return}if(!sides.length){$('formError').textContent='Выберите сторону: слева и/или справа.';return}state.segments.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),start,end,startText:formatPk(start),endText:formatPk(end),sides,completed:false});event.target.reset();render();save();});
+      function fileStamp(){return new Date().toISOString().slice(0,10)}
+      function buildPdfReport(){
+        const total=state.segments.reduce((sum,item)=>sum+lengthMeters(item),0),done=state.segments.reduce((sum,item)=>sum+(item.completed?lengthMeters(item):0),0),pct=total?done/total*100:0;
+        const report=document.createElement('div'); report.className='pdf-report'; report.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff;color:#111;font:12px/1.45 Arial,sans-serif;padding:36px 40px;z-index:-1';
+        const rows=state.segments.map((item,index)=>{const sides=[item.sides.includes('left')?'Слева':'',item.sides.includes('right')?'Справа':''].filter(Boolean).join(', ');return `<tr><td>${index+1}</td><td>${esc(item.startText)}</td><td>${esc(item.endText)}</td><td>${sides}</td><td>${Math.round(lengthMeters(item))} м</td><td class="${item.completed?'done':''}">${item.completed?'Выполнен':'Не выполнен'}</td></tr>`}).join('');
+        report.innerHTML=`<style>.pdf-report h1{font-size:20px;margin:0 0 4px}.sub{color:#555;font-size:11px;margin-bottom:18px}.overall{display:flex;align-items:center;gap:18px;margin:16px 0 20px;padding:14px 16px;border:1px solid #ccc;border-left:5px solid #b3131b;background:#f7f7f7}.main{min-width:150px}.title{font-size:11px;color:#555}.percent{font-size:26px;font-weight:800;line-height:1.1;color:#b3131b}.details{margin-top:3px;font-size:10px;color:#555}.visual{flex:1}.bar{display:flex;height:18px;overflow:hidden;border:1px solid #bbb;border-radius:9px;background:#d9dde2}.bar-done{background:#b3131b}.legend{display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:#555}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border:1px solid #ccc;padding:7px 6px;text-align:left}th{background:#f3f3f3;color:#333}.done{color:#23713f;font-weight:bold}.foot{margin-top:18px;color:#666;font-size:10px}</style><h1>Отчёт по лоткам</h1><div class="sub">Дата формирования: ${new Date().toLocaleString('ru-RU')} · 1 ПК = 100 м</div><div class="overall"><div class="main"><div class="title">Общая выполненность</div><div class="percent">${pct.toFixed(1)}%</div><div class="details">Выполнено ${Math.round(done).toLocaleString('ru-RU')} м из ${Math.round(total).toLocaleString('ru-RU')} м</div></div><div class="visual"><div class="bar"><div class="bar-done" style="width:${pct.toFixed(3)}%"></div><div style="flex:1"></div></div><div class="legend"><span>Выполнено: ${Math.round(done).toLocaleString('ru-RU')} м</span><span>Осталось: ${Math.round(Math.max(0,total-done)).toLocaleString('ru-RU')} м</span></div></div></div><h2>Отрезки лотков</h2><table><thead><tr><th>№</th><th>От ПК</th><th>До ПК</th><th>Сторона</th><th>Длина</th><th>Статус</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Отрезки не добавлены</td></tr>'}</tbody></table><div class="foot">Отчёт сформирован автоматически.</div>`;
+        return report;
+      }
+      $('pdf').addEventListener('click',async()=>{
+        if(!window.jspdf||!window.html2canvas){alert('Не удалось загрузить библиотеки PDF. Проверьте интернет и обновите страницу.');return}
+        const btn=$('pdf');btn.disabled=true;$('status').textContent='формирование PDF…';const report=buildPdfReport();document.body.appendChild(report);
+        try{const canvas=await html2canvas(report,{scale:2,backgroundColor:'#fff',useCORS:true,logging:false});const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4'),margin=8,pageWidth=pdf.internal.pageSize.getWidth(),pageHeight=pdf.internal.pageSize.getHeight(),imgWidth=pageWidth-margin*2,imgHeight=canvas.height*imgWidth/canvas.width,imgData=canvas.toDataURL('image/png');let left=imgHeight,pos=margin;pdf.addImage(imgData,'PNG',margin,pos,imgWidth,imgHeight);left-=pageHeight-margin*2;while(left>0){pos=left-imgHeight+margin;pdf.addPage();pdf.addImage(imgData,'PNG',margin,pos,imgWidth,imgHeight);left-=pageHeight-margin*2}pdf.save(`otchet-lotki-${fileStamp()}.pdf`);$('status').textContent='PDF сохранён'}catch(error){console.error(error);$('status').textContent='ошибка PDF';alert('Не удалось создать PDF.')}finally{report.remove();btn.disabled=false}
+      });
+      $('word').addEventListener('click',async()=>{const res=await fetch('/api/lotki/export/word',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});if(!res.ok)return alert('Не удалось сформировать Word-отчёт.');download(await res.blob(),'lotki.docx');});
+      $('excel').addEventListener('click',async()=>{const res=await fetch('/api/lotki/export/excel');if(!res.ok)return alert('Не удалось сформировать Excel-отчёт.');download(await res.blob(),'lotki.xlsx');});
+      function download(blob,name){const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)}
+      fetch('/api/lotki-data',{cache:'no-store'}).then(res=>res.json()).then(data=>{state=data&&Array.isArray(data.segments)?data:{segments:[]};render();$('status').textContent='готово';}).catch(()=>{$('status').textContent='не удалось загрузить данные';render();});
+    })();
+  </script>
+</body>
+</html>
