@@ -1344,7 +1344,11 @@
             <button class="small-btn" id="excelBtn" title="Выгрузить книгу Excel со сводкой и участками">Скачать Excel</button>
             <button class="small-btn" id="importExcelBtn" title="Загрузить лист 'Участки' из Excel">Импорт Excel</button>
             <input type="file" id="excelFile" accept=".xlsx" hidden />
+            <button class="small-btn" id="exportDataBtn" title="Экспортировать рабочие данные в JSON для передачи другому пользователю">Экспорт данных</button>
+            <button class="small-btn" id="importDataBtn" title="Загрузить рабочие данные из JSON-файла">Импорт данных</button>
+            <input type="file" id="dataFile" accept=".json,application/json" hidden />
             <button class="small-btn" id="backupBtn" title="Создать резервную копию сейчас">Резервная копия</button>
+            <button class="small-btn" id="undoBtn" title="Отменить последнее сохранённое изменение">Отменить последнее</button>
             <button class="small-btn" id="restoreBtn" title="Выбрать и восстановить одну из копий">Восстановить</button>
           </div>
           <span class="status" id="statusMsg">загрузка…</span>
@@ -1551,10 +1555,29 @@
           }
           return "";
         }
-        function commitLayer(layer, before, action) {
+        function formatPk(value) {
+          return Number(value).toFixed(2);
+        }
+        function segmentLabel(segment) {
+          return segment ? `ПК ${formatPk(segment.s)}–${formatPk(segment.e)}` : "—";
+        }
+        function commitLayer(layer, before, action, change = {}) {
           const error = hasInvalidSegments(layer, state.start, state.total);
           if (error) { layer.segments = before; alert(error); return false; }
-          journal(action, layer.name);
+          const segment = change.segmentAfter || change.segmentBefore;
+          const detail = change.segmentBefore && change.segmentAfter
+            ? `Слой: ${layer.name}, было: ${segmentLabel(change.segmentBefore)}, стало: ${segmentLabel(change.segmentAfter)}`
+            : change.segmentAfter
+              ? `Добавлен участок на слое ${layer.name}: ${segmentLabel(change.segmentAfter)}`
+              : segment
+                ? `Слой: ${layer.name}, участок: ${segmentLabel(segment)}`
+            : `Слой: ${layer.name}`;
+          journal(action, detail, {
+            layer: layer.name,
+            segment: segment ? { start: segment.s, end: segment.e } : null,
+            before: change.segmentBefore ? { start: change.segmentBefore.s, end: change.segmentBefore.e } : null,
+            after: change.segmentAfter ? { start: change.segmentAfter.s, end: change.segmentAfter.e } : null,
+          });
           renderRuler(); renderLayers(); scheduleSave(); return true;
         }
 
@@ -1669,10 +1692,16 @@
           return project;
         }
         function activeProject() { return workspace.projects.find((p) => p.id === workspace.activeProjectId); }
-        function journal(action, detail) {
+        function journal(action, detail, change = {}) {
           const project = activeProject();
           project.journal = project.journal || [];
-          project.journal.unshift({ date: new Date().toLocaleString("ru-RU"), action, detail });
+          project.journal.unshift({
+            date: new Date().toLocaleString("ru-RU"),
+            project: project.name,
+            action,
+            detail,
+            ...change,
+          });
           project.journal = project.journal.slice(0, 100);
         }
 
@@ -1921,27 +1950,31 @@
                 );
                 const seg = layer.segments[inp.dataset.idx];
                 const before = JSON.parse(JSON.stringify(layer.segments));
+                const beforeSegment = JSON.parse(JSON.stringify(seg));
                 const val = parseFloat(inp.value);
                 if (!isNaN(val)) seg[inp.dataset.field] = val;
-                commitLayer(layer, before, "Изменён участок слоя");
+                commitLayer(layer, before, "Изменён участок слоя", { segmentBefore: beforeSegment, segmentAfter: { ...seg } });
               });
             });
           layersEl.querySelectorAll("[data-plan-layer]").forEach((inp) => inp.addEventListener("change", () => {
             const layer = state.layers.find((l) => l.id === inp.dataset.planLayer);
+            const before = layer.planPercent || 0;
             layer.planPercent = Math.max(0, Math.min(100, parseFloat(inp.value) || 0));
-            journal("Изменён план", layer.name); renderSummary(); scheduleSave();
+            journal("Изменён план", `Слой: ${layer.name}, было: ${before}%, стало: ${layer.planPercent}%`, { layer: layer.name, before: { planPercent: before }, after: { planPercent: layer.planPercent } }); renderSummary(); scheduleSave();
           }));
           layersEl.querySelectorAll("[data-plan-date-layer]").forEach((inp) => inp.addEventListener("change", () => {
             const layer = state.layers.find((l) => l.id === inp.dataset.planDateLayer);
+            const before = layer.planDate || "";
             layer.planDate = normalizeDateValue(inp.value);
-            journal("Изменена дата плана", layer.name); renderSummary(); scheduleSave();
+            journal("Изменена дата плана", `Слой: ${layer.name}, было: ${before || "—"}, стало: ${layer.planDate || "—"}`, { layer: layer.name, before: { planDate: before }, after: { planDate: layer.planDate } }); renderSummary(); scheduleSave();
           }));
           layersEl.querySelectorAll("[data-excluded-layer]").forEach((inp) => inp.addEventListener("change", () => {
             const layer = state.layers.find((l) => l.id === inp.dataset.excludedLayer);
             const routeLength = Math.max(0, state.total - state.start);
+            const before = layer.excludedPk || 0;
             const value = parseFloat(inp.value);
             layer.excludedPk = Number.isFinite(value) ? Math.max(0, Math.min(routeLength, value)) : 0;
-            journal("Изменено исключение из расчёта", layer.name);
+            journal("Изменено исключение из расчёта", `Слой: ${layer.name}, было: ${before} ПК, стало: ${layer.excludedPk} ПК`, { layer: layer.name, before: { excludedPk: before }, after: { excludedPk: layer.excludedPk } });
             renderLayers();
             scheduleSave();
           }));
@@ -1951,8 +1984,9 @@
                   (l) => l.id === btn.dataset.delLayer,
                 );
                 if (!confirm(`Удалить участок слоя «${layer.name}»?`)) return;
+                const deleted = layer.segments[parseInt(btn.dataset.delIdx)];
                 layer.segments.splice(parseInt(btn.dataset.delIdx), 1);
-                journal("Удалён участок слоя", layer.name); renderLayers(); scheduleSave();
+                journal("Удалён участок слоя", `Слой: ${layer.name}, участок: ${segmentLabel(deleted)}`, { layer: layer.name, segment: deleted ? { start: deleted.s, end: deleted.e } : null, before: deleted ? { start: deleted.s, end: deleted.e } : null, after: null }); renderLayers(); scheduleSave();
               });
             });
           layersEl.querySelectorAll("[data-del-full-layer]").forEach((btn) => {
@@ -1966,9 +2000,11 @@
                 )
               )
                 return;
+              const deletedLayer = state.layers.find((l) => l.id === btn.dataset.delFullLayer);
               state.layers = state.layers.filter(
                 (l) => l.id !== btn.dataset.delFullLayer,
               );
+              journal("Удалён слой", `Слой: ${deletedLayer.name}`, { layer: deletedLayer.name });
               openEditorId = null;
               renderLayers();
               scheduleSave();
@@ -1988,7 +2024,7 @@
               const layer = state.layers.find((l) => l.id === id);
               const before = JSON.parse(JSON.stringify(layer.segments));
               layer.segments.push({ s, e, status: "Выполнено", responsible: $("#new-person-" + id).value.trim(), quality: $("#new-quality-" + id).value.trim(), date: new Date().toLocaleDateString("ru-RU") });
-              commitLayer(layer, before, "Добавлен участок слоя");
+              commitLayer(layer, before, "Добавлен участок слоя", { segmentAfter: { s, e } });
             });
           });
         }
@@ -2025,7 +2061,7 @@
        <div class="summary-overall">Общая выполненность объекта: <b>${objectPct.toFixed(1)}%</b><span class="summary-help" tabindex="0" role="img" aria-label="Как считается общая выполненность" data-tooltip="Общая уложенная длина слоёв ÷ сумму длин слоёв после индивидуальных исключений × 100%.">?</span></div>
        <div class="summary-meta">Средний план по слоям: <b>${planAvg.toFixed(1)}%</b></div>
        <div class="summary-grid">${rows}</div>`;
-          const entries = (activeProject().journal || []).slice(0, 8).map((item) => `<div class="summary-row"><span>${item.date}</span><span><b>${item.action}</b> · ${item.detail || ""}</span></div>`).join("");
+          const entries = (activeProject().journal || []).slice(0, 8).map((item) => `<div class="summary-row"><span>${item.date}</span><span><b>${item.action}</b> · ${item.project ? item.project + " · " : ""}${item.detail || ""}</span></div>`).join("");
           $("#journalPanel").innerHTML = `<div class="summary-hdr">Журнал изменений</div>${entries || '<div class="summary-meta">Изменений в журнале пока нет.</div>'}`;
         }
 
@@ -2464,7 +2500,69 @@
             workspace = normalizeWorkspace(await res.json()); selectActiveProject(); journal("Импорт Excel", file.name); render(); scheduleSave(); setStatus("Excel импортирован", true);
           } catch (e) { alert("Не удалось импортировать файл. Используйте лист «Участки» с колонками «Слой», «От, ПК», «До, ПК»."); }
         }
+        async function exportData() {
+          try {
+            await save();
+            const payload = {
+              format: "progressbars-data",
+              schemaVersion: 1,
+              exportedAt: new Date().toISOString(),
+              workspace,
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "progressbars-data-" + fileStamp() + ".json";
+            link.click();
+            URL.revokeObjectURL(url);
+            setStatus("данные экспортированы", true);
+          } catch (e) {
+            console.error(e);
+            setStatus("ошибка экспорта данных");
+            alert("Не удалось экспортировать данные.");
+          }
+        }
+        async function importData(file) {
+          try {
+            const payload = JSON.parse(await file.text());
+            if (payload && payload.schemaVersion && payload.schemaVersion > 1) {
+              throw new Error("файл создан более новой версией программы");
+            }
+            const incoming = payload && payload.format === "progressbars-data"
+              ? payload.workspace
+              : payload;
+            if (!isValidState(incoming)) throw new Error("неверная структура файла");
+            if (!confirm("Импорт заменит текущие данные. Перед этим будет создана резервная копия. Продолжить?")) return;
+            await save();
+            try { await fetch("/api/backups/create", { method: "POST" }); } catch (e) { /* browser-only mode */ }
+            workspace = normalizeWorkspace(incoming);
+            selectActiveProject();
+            journal("Импорт данных", `Файл: ${file.name}`, { sourceFile: file.name, import: true });
+            render();
+            await save();
+            setStatus("данные импортированы", true);
+          } catch (e) {
+            console.error(e);
+            alert("Не удалось импортировать данные: " + (e.message || "неверный JSON-файл"));
+          }
+        }
         async function createBackup() { try { await save(); const res = await fetch("/api/backups/create", {method:"POST"}); if (!res.ok) throw new Error(); setStatus("резервная копия создана", true); } catch(e) { setStatus("бэкап доступен через start.bat"); } }
+        async function undoLastChange() {
+          if (!confirm("Отменить последнее сохранённое изменение? Текущее состояние будет сохранено в резервных копиях.")) return;
+          try {
+            const res = await fetch("/api/undo", { method: "POST" });
+            if (!res.ok) throw new Error(await res.text());
+            workspace = normalizeWorkspace(await res.json());
+            selectActiveProject();
+            journal("Отменено последнее изменение", "Восстановлено состояние до последнего действия", { undo: true });
+            render();
+            await save();
+            setStatus("последнее изменение отменено", true);
+          } catch (e) {
+            alert("Не удалось отменить последнее изменение. Возможно, сохранённого действия ещё нет.");
+          }
+        }
         async function restoreBackup() {
           try { const backups = await (await fetch("/api/backups")).json(); if (!backups.length) return alert("Резервных копий пока нет."); const text = backups.slice(0, 10).map((b,i) => `${i+1}. ${b.name}`).join("\n"); const n = parseInt(prompt("Введите номер копии для восстановления:\n" + text), 10); if (!n || !backups[n-1]) return; const res = await fetch("/api/backups/restore", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name:backups[n-1].name})}); if (!res.ok) throw new Error(); workspace = normalizeWorkspace(await res.json()); selectActiveProject(); render(); setStatus("копия восстановлена", true); } catch(e) { alert("Не удалось восстановить копию."); }
         }
@@ -2521,7 +2619,11 @@
         $("#excelBtn").addEventListener("click", exportExcel);
         $("#importExcelBtn").addEventListener("click", () => $("#excelFile").click());
         $("#excelFile").addEventListener("change", (e) => { if (e.target.files[0]) importExcel(e.target.files[0]); e.target.value = ""; });
+        $("#exportDataBtn").addEventListener("click", exportData);
+        $("#importDataBtn").addEventListener("click", () => $("#dataFile").click());
+        $("#dataFile").addEventListener("change", (e) => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ""; });
         $("#backupBtn").addEventListener("click", createBackup);
+        $("#undoBtn").addEventListener("click", undoLastChange);
         $("#restoreBtn").addEventListener("click", restoreBackup);
         $("#layerFilter").addEventListener("change", renderLayers);
         $("#projectSelect").addEventListener("change", (e) => { workspace.activeProjectId = e.target.value; selectActiveProject(); openEditorId = null; render(); scheduleSave(); });

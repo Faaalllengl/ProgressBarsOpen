@@ -16,6 +16,7 @@ from docx.shared import Cm, Pt
 
 DIR = Path(__file__).resolve().parent
 DATA_FILE = DIR / "road-progress-data.json"
+UNDO_FILE = DIR / "road-progress-undo.json"
 LOTKI_DATA_FILE = DIR / "lotki-data.json"
 BACKUP_DIR = DIR / "backups"
 PORT = 8765
@@ -300,6 +301,9 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/backups/restore":
             self._restore_backup()
             return
+        if path == "/api/undo":
+            self._undo_last_change()
+            return
         self.send_error(404)
 
     def _send_data(self):
@@ -345,6 +349,10 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             data = json.loads(raw.decode("utf-8"))
             _validate_data(data)
+            if DATA_FILE.is_file():
+                current = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+                if current != data:
+                    UNDO_FILE.write_bytes(DATA_FILE.read_bytes())
             _backup_current_data()
             _write_json_file(DATA_FILE, data)
         except Exception as exc:
@@ -388,6 +396,25 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         self.send_header("Content-Disposition", 'attachment; filename="progress.xlsx"')
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _undo_last_change(self):
+        try:
+            if not UNDO_FILE.is_file():
+                raise ValueError("нет сохранённого действия для отката")
+            data = json.loads(UNDO_FILE.read_text(encoding="utf-8"))
+            _validate_data(data)
+            _backup_current_data()
+            _write_json_file(DATA_FILE, data)
+            UNDO_FILE.unlink(missing_ok=True)
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
