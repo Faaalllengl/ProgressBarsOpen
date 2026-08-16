@@ -609,6 +609,49 @@
         border-radius: var(--radius-1);
         color: var(--text);
       }
+      .updates-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: rgba(8, 10, 12, 0.72);
+      }
+      .updates-backdrop[hidden] {
+        display: none;
+      }
+      .updates-modal {
+        width: min(500px, 100%);
+        padding: 24px;
+        border: 1px solid var(--color-border-strong);
+        border-radius: var(--radius-3);
+        background: var(--color-surface);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
+      }
+      .updates-modal h2 {
+        margin: 0 0 6px;
+        color: var(--color-text);
+        font-size: 19px;
+      }
+      .updates-version {
+        margin-bottom: 18px;
+        color: var(--color-success);
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+      .updates-list {
+        display: grid;
+        gap: 9px;
+        margin: 0 0 22px;
+        padding-left: 20px;
+        color: var(--color-text-muted);
+        line-height: 1.45;
+      }
+      .updates-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
       .summary-help {
         position: relative;
         display: inline-flex;
@@ -1357,6 +1400,17 @@
       </div>
     </div>
 
+    <div class="updates-backdrop" id="updatesModal" hidden>
+      <section class="updates-modal" role="dialog" aria-modal="true" aria-labelledby="updatesTitle">
+        <h2 id="updatesTitle">Доступно обновление</h2>
+        <div class="updates-version" id="updatesVersion"></div>
+        <ul class="updates-list" id="updatesList"></ul>
+        <div class="updates-actions">
+          <button class="small-btn" id="updatesCloseBtn">Понятно</button>
+        </div>
+      </section>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
@@ -1441,6 +1495,7 @@
         ];
 
         const STORAGE_KEY = "road-progress-state";
+        const UPDATE_STORAGE_KEY = "progressbars-last-seen-version";
         const DATA_FILE_NAME = "road-progress-data.json";
         let state = null;
         let workspace = null;
@@ -1802,6 +1857,35 @@
           saveMode = "browser";
           render();
           setStatus("запустите start.bat — данные будут в " + DATA_FILE_NAME);
+        }
+
+        async function checkForUpdates() {
+          try {
+            const res = await fetch("updates.json", { cache: "no-store" });
+            if (!res.ok) return;
+            const updates = await res.json();
+            if (!updates.version || !Array.isArray(updates.changes)) return;
+            if (localStorage.getItem(UPDATE_STORAGE_KEY) === updates.version) return;
+
+            $("#updatesVersion").textContent = `Версия ${updates.version}${updates.date ? " · " + updates.date : ""}`;
+            $("#updatesTitle").textContent = updates.title || "Доступно обновление";
+            const list = $("#updatesList");
+            list.replaceChildren();
+            updates.changes.forEach((change) => {
+              const item = document.createElement("li");
+              item.textContent = String(change);
+              list.appendChild(item);
+            });
+            $("#updatesModal").hidden = false;
+          } catch (e) {
+            console.warn("Не удалось проверить список обновлений", e);
+          }
+        }
+
+        function closeUpdates() {
+          const version = $("#updatesVersion").textContent.match(/Версия ([^ ·]+)/);
+          if (version) localStorage.setItem(UPDATE_STORAGE_KEY, version[1]);
+          $("#updatesModal").hidden = true;
         }
 
         function renderRuler() {
@@ -2645,6 +2729,7 @@
           render();
           scheduleSave();
         });
+        $("#updatesCloseBtn").addEventListener("click", closeUpdates);
         $("#pkSearchBtn").addEventListener("click", () => { const pk = parseFloat($("#pkSearch").value); if (!Number.isFinite(pk)) return; let found = null; state.layers.forEach((layer) => layer.segments.forEach((seg) => { if (pk >= seg.s && pk <= seg.e) found = layer.id; })); if (!found) return alert("На этом ПК нет выполненного участка."); openEditorId = found; renderLayers(); const row = layersEl.querySelector(`.editor[data-layer-id="${found}"]`); if (row) row.scrollIntoView({behavior:"smooth", block:"center"}); });
         $("#newLayerName").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#addLayerBtn").click(); } });
         $("#pkSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#pkSearchBtn").click(); } });
@@ -2663,7 +2748,7 @@
         });
 
         setStatus("загрузка…");
-        load();
+        load().then(checkForUpdates);
       })();
     </script>
   </body>
