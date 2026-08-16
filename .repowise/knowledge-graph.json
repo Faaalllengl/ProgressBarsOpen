@@ -4,7 +4,7 @@
   "project": {
     "name": "ProgressBarsOpen",
     "is_monorepo": false,
-    "total_files": 56,
+    "total_files": 60,
     "entry_points": [
       "server.py"
     ],
@@ -12,7 +12,7 @@
     "entry_candidates": [
       "server.py"
     ],
-    "graph_mode": "flow"
+    "graph_mode": "sparse"
   },
   "nodes": [
     {
@@ -25,6 +25,35 @@
       "summary": ""
     },
     {
+      "id": "file:.claude/CLAUDE.md",
+      "type": "document",
+      "filePath": ".claude/CLAUDE.md",
+      "language": "markdown",
+      "symbolCount": 0,
+      "lineCount": 175,
+      "complexity": "moderate",
+      "pagerank": 0.016266,
+      "communityId": 1,
+      "tags": [],
+      "summary": "Repository instructions and context for AI coding agents.",
+      "primaryOwner": "Faaalllengl"
+    },
+    {
+      "id": "file:.mcp.json",
+      "type": "config",
+      "filePath": ".mcp.json",
+      "language": "json",
+      "symbolCount": 0,
+      "lineCount": 11,
+      "complexity": "simple",
+      "pagerank": 0.016266,
+      "communityId": 2,
+      "tags": [
+        "config"
+      ],
+      "summary": "Configuration file: .mcp.json."
+    },
+    {
       "id": "file:AGENTS.md",
       "type": "document",
       "filePath": "AGENTS.md",
@@ -32,25 +61,10 @@
       "symbolCount": 0,
       "lineCount": 178,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 1,
+      "pagerank": 0.016266,
+      "communityId": 3,
       "tags": [],
       "summary": "Documentation: AGENTS.md."
-    },
-    {
-      "id": "file:backups/road-progress-2026-08-11_14-31-06_928.json",
-      "type": "config",
-      "filePath": "backups/road-progress-2026-08-11_14-31-06_928.json",
-      "language": "json",
-      "symbolCount": 0,
-      "lineCount": 196,
-      "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 2,
-      "tags": [
-        "config"
-      ],
-      "summary": "Configuration file: road-progress-2026-08-11_14-31-06_928.json."
     },
     {
       "id": "file:backups/road-progress-2026-08-11_14-31-21_644.json",
@@ -60,8 +74,8 @@
       "symbolCount": 0,
       "lineCount": 197,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 3,
+      "pagerank": 0.016266,
+      "communityId": 4,
       "tags": [
         "config"
       ],
@@ -75,8 +89,8 @@
       "symbolCount": 0,
       "lineCount": 196,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 4,
+      "pagerank": 0.016266,
+      "communityId": 5,
       "tags": [
         "config"
       ],
@@ -90,8 +104,8 @@
       "symbolCount": 0,
       "lineCount": 196,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 5,
+      "pagerank": 0.016266,
+      "communityId": 6,
       "tags": [
         "config"
       ],
@@ -105,8 +119,8 @@
       "symbolCount": 0,
       "lineCount": 55,
       "complexity": "simple",
-      "pagerank": 0.017398,
-      "communityId": 6,
+      "pagerank": 0.016266,
+      "communityId": 7,
       "tags": [
         "config"
       ],
@@ -120,8 +134,8 @@
       "symbolCount": 0,
       "lineCount": 185,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 7,
+      "pagerank": 0.016266,
+      "communityId": 8,
       "tags": [
         "config"
       ],
@@ -135,8 +149,8 @@
       "symbolCount": 0,
       "lineCount": 172,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 8,
+      "pagerank": 0.016266,
+      "communityId": 9,
       "tags": [
         "config"
       ],
@@ -150,8 +164,8 @@
       "symbolCount": 0,
       "lineCount": 159,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 9,
+      "pagerank": 0.016266,
+      "communityId": 10,
       "tags": [
         "config"
       ],
@@ -165,8 +179,8 @@
       "symbolCount": 0,
       "lineCount": 146,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 10,
+      "pagerank": 0.016266,
+      "communityId": 11,
       "tags": [
         "config"
       ],
@@ -180,8 +194,8 @@
       "symbolCount": 0,
       "lineCount": 133,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 11,
+      "pagerank": 0.016266,
+      "communityId": 12,
       "tags": [
         "config"
       ],
@@ -195,8 +209,8 @@
       "symbolCount": 0,
       "lineCount": 120,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 12,
+      "pagerank": 0.016266,
+      "communityId": 13,
       "tags": [
         "config"
       ],
@@ -210,8 +224,8 @@
       "symbolCount": 0,
       "lineCount": 110,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 13,
+      "pagerank": 0.016266,
+      "communityId": 14,
       "tags": [
         "config"
       ],
@@ -225,8 +239,8 @@
       "symbolCount": 0,
       "lineCount": 101,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 14,
+      "pagerank": 0.016266,
+      "communityId": 15,
       "tags": [
         "config"
       ],
@@ -240,8 +254,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 15,
+      "pagerank": 0.016266,
+      "communityId": 16,
       "tags": [
         "config"
       ],
@@ -255,8 +269,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 16,
+      "pagerank": 0.016266,
+      "communityId": 17,
       "tags": [
         "config"
       ],
@@ -270,8 +284,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 17,
+      "pagerank": 0.016266,
+      "communityId": 18,
       "tags": [
         "config"
       ],
@@ -285,8 +299,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 18,
+      "pagerank": 0.016266,
+      "communityId": 19,
       "tags": [
         "config"
       ],
@@ -300,8 +314,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 19,
+      "pagerank": 0.016266,
+      "communityId": 20,
       "tags": [
         "config"
       ],
@@ -315,8 +329,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 20,
+      "pagerank": 0.016266,
+      "communityId": 21,
       "tags": [
         "config"
       ],
@@ -330,8 +344,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 21,
+      "pagerank": 0.016266,
+      "communityId": 22,
       "tags": [
         "config"
       ],
@@ -345,8 +359,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 22,
+      "pagerank": 0.016266,
+      "communityId": 23,
       "tags": [
         "config"
       ],
@@ -360,8 +374,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 23,
+      "pagerank": 0.016266,
+      "communityId": 24,
       "tags": [
         "config"
       ],
@@ -375,8 +389,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 24,
+      "pagerank": 0.016266,
+      "communityId": 25,
       "tags": [
         "config"
       ],
@@ -390,8 +404,8 @@
       "symbolCount": 0,
       "lineCount": 109,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 25,
+      "pagerank": 0.016266,
+      "communityId": 26,
       "tags": [
         "config"
       ],
@@ -405,8 +419,8 @@
       "symbolCount": 0,
       "lineCount": 82,
       "complexity": "simple",
-      "pagerank": 0.017398,
-      "communityId": 26,
+      "pagerank": 0.016266,
+      "communityId": 27,
       "tags": [
         "config"
       ],
@@ -420,8 +434,8 @@
       "symbolCount": 0,
       "lineCount": 87,
       "complexity": "simple",
-      "pagerank": 0.017398,
-      "communityId": 27,
+      "pagerank": 0.016266,
+      "communityId": 28,
       "tags": [
         "config"
       ],
@@ -435,8 +449,8 @@
       "symbolCount": 0,
       "lineCount": 87,
       "complexity": "simple",
-      "pagerank": 0.017398,
-      "communityId": 28,
+      "pagerank": 0.016266,
+      "communityId": 29,
       "tags": [
         "config"
       ],
@@ -450,8 +464,8 @@
       "symbolCount": 0,
       "lineCount": 87,
       "complexity": "simple",
-      "pagerank": 0.017398,
-      "communityId": 29,
+      "pagerank": 0.016266,
+      "communityId": 30,
       "tags": [
         "config"
       ],
@@ -465,8 +479,8 @@
       "symbolCount": 0,
       "lineCount": 87,
       "complexity": "simple",
-      "pagerank": 0.017398,
-      "communityId": 30,
+      "pagerank": 0.016266,
+      "communityId": 31,
       "tags": [
         "config"
       ],
@@ -480,8 +494,8 @@
       "symbolCount": 0,
       "lineCount": 88,
       "complexity": "simple",
-      "pagerank": 0.017398,
-      "communityId": 31,
+      "pagerank": 0.016266,
+      "communityId": 32,
       "tags": [
         "config"
       ],
@@ -495,8 +509,8 @@
       "symbolCount": 0,
       "lineCount": 98,
       "complexity": "simple",
-      "pagerank": 0.017398,
-      "communityId": 32,
+      "pagerank": 0.016266,
+      "communityId": 33,
       "tags": [
         "config"
       ],
@@ -510,8 +524,8 @@
       "symbolCount": 0,
       "lineCount": 108,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 33,
+      "pagerank": 0.016266,
+      "communityId": 34,
       "tags": [
         "config"
       ],
@@ -525,8 +539,8 @@
       "symbolCount": 0,
       "lineCount": 119,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 34,
+      "pagerank": 0.016266,
+      "communityId": 35,
       "tags": [
         "config"
       ],
@@ -540,8 +554,8 @@
       "symbolCount": 0,
       "lineCount": 129,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 35,
+      "pagerank": 0.016266,
+      "communityId": 36,
       "tags": [
         "config"
       ],
@@ -555,8 +569,8 @@
       "symbolCount": 0,
       "lineCount": 139,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 36,
+      "pagerank": 0.016266,
+      "communityId": 37,
       "tags": [
         "config"
       ],
@@ -570,8 +584,8 @@
       "symbolCount": 0,
       "lineCount": 150,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 37,
+      "pagerank": 0.016266,
+      "communityId": 38,
       "tags": [
         "config"
       ],
@@ -585,8 +599,8 @@
       "symbolCount": 0,
       "lineCount": 160,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 38,
+      "pagerank": 0.016266,
+      "communityId": 39,
       "tags": [
         "config"
       ],
@@ -600,8 +614,8 @@
       "symbolCount": 0,
       "lineCount": 170,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 39,
+      "pagerank": 0.016266,
+      "communityId": 40,
       "tags": [
         "config"
       ],
@@ -615,8 +629,8 @@
       "symbolCount": 0,
       "lineCount": 181,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 40,
+      "pagerank": 0.016266,
+      "communityId": 41,
       "tags": [
         "config"
       ],
@@ -630,8 +644,8 @@
       "symbolCount": 0,
       "lineCount": 191,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 41,
+      "pagerank": 0.016266,
+      "communityId": 42,
       "tags": [
         "config"
       ],
@@ -645,8 +659,8 @@
       "symbolCount": 0,
       "lineCount": 201,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 42,
+      "pagerank": 0.016266,
+      "communityId": 43,
       "tags": [
         "config"
       ],
@@ -660,8 +674,8 @@
       "symbolCount": 0,
       "lineCount": 212,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 43,
+      "pagerank": 0.016266,
+      "communityId": 44,
       "tags": [
         "config"
       ],
@@ -675,8 +689,8 @@
       "symbolCount": 0,
       "lineCount": 222,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 44,
+      "pagerank": 0.016266,
+      "communityId": 45,
       "tags": [
         "config"
       ],
@@ -690,8 +704,8 @@
       "symbolCount": 0,
       "lineCount": 232,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 45,
+      "pagerank": 0.016266,
+      "communityId": 46,
       "tags": [
         "config"
       ],
@@ -705,8 +719,8 @@
       "symbolCount": 0,
       "lineCount": 243,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 46,
+      "pagerank": 0.016266,
+      "communityId": 47,
       "tags": [
         "config"
       ],
@@ -720,8 +734,8 @@
       "symbolCount": 0,
       "lineCount": 253,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 47,
+      "pagerank": 0.016266,
+      "communityId": 48,
       "tags": [
         "config"
       ],
@@ -735,8 +749,8 @@
       "symbolCount": 0,
       "lineCount": 263,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 48,
+      "pagerank": 0.016266,
+      "communityId": 49,
       "tags": [
         "config"
       ],
@@ -750,8 +764,8 @@
       "symbolCount": 0,
       "lineCount": 263,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 49,
+      "pagerank": 0.016266,
+      "communityId": 50,
       "tags": [
         "config"
       ],
@@ -765,8 +779,8 @@
       "symbolCount": 0,
       "lineCount": 263,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 50,
+      "pagerank": 0.016266,
+      "communityId": 51,
       "tags": [
         "config"
       ],
@@ -780,12 +794,28 @@
       "symbolCount": 0,
       "lineCount": 263,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 51,
+      "pagerank": 0.016266,
+      "communityId": 52,
       "tags": [
         "config"
       ],
       "summary": "Configuration file: road-progress-2026-08-15_18-35-41_029.json."
+    },
+    {
+      "id": "file:backups/road-progress-2026-08-15_20-12-43_949.json",
+      "type": "config",
+      "filePath": "backups/road-progress-2026-08-15_20-12-43_949.json",
+      "language": "json",
+      "symbolCount": 0,
+      "lineCount": 263,
+      "complexity": "moderate",
+      "pagerank": 0.016266,
+      "communityId": 53,
+      "tags": [
+        "config"
+      ],
+      "summary": "Configuration file: road-progress-2026-08-15_20-12-43_949.json.",
+      "primaryOwner": "Faaalllengl"
     },
     {
       "id": "file:export_word.py",
@@ -795,10 +825,39 @@
       "symbolCount": 7,
       "lineCount": 121,
       "complexity": "moderate",
-      "pagerank": 0.030253,
+      "pagerank": 0.028279,
       "communityId": 0,
       "tags": [],
-      "summary": "Application module export_word defining _fmt, _meters, _covered.",
+      "summary": "Application module export_word defining _fmt, _meters, _covered."
+    },
+    {
+      "id": "file:lotki-data.json",
+      "type": "config",
+      "filePath": "lotki-data.json",
+      "language": "json",
+      "symbolCount": 0,
+      "lineCount": 110,
+      "complexity": "moderate",
+      "pagerank": 0.016266,
+      "communityId": 54,
+      "tags": [
+        "config"
+      ],
+      "summary": "Configuration file: lotki-data.json.",
+      "primaryOwner": "Faaalllengl"
+    },
+    {
+      "id": "file:lotki.html",
+      "type": "file",
+      "filePath": "lotki.html",
+      "language": "html",
+      "symbolCount": 0,
+      "lineCount": 508,
+      "complexity": "complex",
+      "pagerank": 0.016266,
+      "communityId": 55,
+      "tags": [],
+      "summary": "Application module lotki.",
       "primaryOwner": "Faaalllengl"
     },
     {
@@ -809,12 +868,13 @@
       "symbolCount": 0,
       "lineCount": 263,
       "complexity": "moderate",
-      "pagerank": 0.017398,
-      "communityId": 52,
+      "pagerank": 0.016266,
+      "communityId": 56,
       "tags": [
         "config"
       ],
-      "summary": "Configuration file: road-progress-data.json."
+      "summary": "Configuration file: road-progress-data.json.",
+      "primaryOwner": "Faaalllengl"
     },
     {
       "id": "file:road-progress.html",
@@ -822,22 +882,23 @@
       "filePath": "road-progress.html",
       "language": "html",
       "symbolCount": 0,
-      "lineCount": 2469,
+      "lineCount": 2472,
       "complexity": "complex",
-      "pagerank": 0.017398,
-      "communityId": 53,
+      "pagerank": 0.016266,
+      "communityId": 57,
       "tags": [],
-      "summary": "Application module road-progress."
+      "summary": "Application module road-progress.",
+      "primaryOwner": "Faaalllengl"
     },
     {
       "id": "file:server.py",
       "type": "file",
       "filePath": "server.py",
       "language": "python",
-      "symbolCount": 27,
-      "lineCount": 411,
+      "symbolCount": 36,
+      "lineCount": 604,
       "complexity": "complex",
-      "pagerank": 0.030253,
+      "pagerank": 0.028279,
       "communityId": 0,
       "tags": [
         "entry_point"
@@ -853,8 +914,8 @@
       "symbolCount": 0,
       "lineCount": 7,
       "complexity": "simple",
-      "pagerank": 0.017398,
-      "communityId": 54,
+      "pagerank": 0.016266,
+      "communityId": 58,
       "tags": [
         "config"
       ],
@@ -960,6 +1021,24 @@
       "summary": ""
     },
     {
+      "id": "function:server.py:_export_lotki_excel",
+      "type": "function",
+      "filePath": "server.py",
+      "name": "_export_lotki_excel",
+      "language": "python",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:server.py:_export_lotki_word",
+      "type": "function",
+      "filePath": "server.py",
+      "name": "_export_lotki_word",
+      "language": "python",
+      "tags": [],
+      "summary": ""
+    },
+    {
       "id": "function:server.py:_export_word",
       "type": "function",
       "filePath": "server.py",
@@ -973,6 +1052,33 @@
       "type": "function",
       "filePath": "server.py",
       "name": "_import_excel",
+      "language": "python",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:server.py:_lotki_export_excel",
+      "type": "function",
+      "filePath": "server.py",
+      "name": "_lotki_export_excel",
+      "language": "python",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:server.py:_lotki_export_word",
+      "type": "function",
+      "filePath": "server.py",
+      "name": "_lotki_export_word",
+      "language": "python",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:server.py:_lotki_length",
+      "type": "function",
+      "filePath": "server.py",
+      "name": "_lotki_length",
       "language": "python",
       "tags": [],
       "summary": ""
@@ -1005,6 +1111,15 @@
       "summary": ""
     },
     {
+      "id": "function:server.py:_save_lotki_data",
+      "type": "function",
+      "filePath": "server.py",
+      "name": "_save_lotki_data",
+      "language": "python",
+      "tags": [],
+      "summary": ""
+    },
+    {
       "id": "function:server.py:_send_backups",
       "type": "function",
       "filePath": "server.py",
@@ -1023,10 +1138,28 @@
       "summary": ""
     },
     {
+      "id": "function:server.py:_send_lotki_data",
+      "type": "function",
+      "filePath": "server.py",
+      "name": "_send_lotki_data",
+      "language": "python",
+      "tags": [],
+      "summary": ""
+    },
+    {
       "id": "function:server.py:_validate_data",
       "type": "function",
       "filePath": "server.py",
       "name": "_validate_data",
+      "language": "python",
+      "tags": [],
+      "summary": ""
+    },
+    {
+      "id": "function:server.py:_validate_lotki",
+      "type": "function",
+      "filePath": "server.py",
+      "name": "_validate_lotki",
       "language": "python",
       "tags": [],
       "summary": ""
@@ -1196,6 +1329,20 @@
     },
     {
       "source": "file:server.py",
+      "target": "function:server.py:_export_lotki_excel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py",
+      "target": "function:server.py:_export_lotki_word",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py",
       "target": "function:server.py:_export_word",
       "type": "contains",
       "direction": "forward",
@@ -1204,6 +1351,27 @@
     {
       "source": "file:server.py",
       "target": "function:server.py:_import_excel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py",
+      "target": "function:server.py:_lotki_export_excel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py",
+      "target": "function:server.py:_lotki_export_word",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py",
+      "target": "function:server.py:_lotki_length",
       "type": "contains",
       "direction": "forward",
       "weight": 1.0
@@ -1231,6 +1399,13 @@
     },
     {
       "source": "file:server.py",
+      "target": "function:server.py:_save_lotki_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py",
       "target": "function:server.py:_send_backups",
       "type": "contains",
       "direction": "forward",
@@ -1245,7 +1420,21 @@
     },
     {
       "source": "file:server.py",
+      "target": "function:server.py:_send_lotki_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py",
       "target": "function:server.py:_validate_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py",
+      "target": "function:server.py:_validate_lotki",
       "type": "contains",
       "direction": "forward",
       "weight": 1.0
@@ -1322,6 +1511,20 @@
     },
     {
       "source": "file:server.py::Handler",
+      "target": "function:server.py:_export_lotki_excel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py::Handler",
+      "target": "function:server.py:_export_lotki_word",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py::Handler",
       "target": "function:server.py:_export_word",
       "type": "contains",
       "direction": "forward",
@@ -1350,6 +1553,13 @@
     },
     {
       "source": "file:server.py::Handler",
+      "target": "function:server.py:_save_lotki_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py::Handler",
       "target": "function:server.py:_send_backups",
       "type": "contains",
       "direction": "forward",
@@ -1358,6 +1568,13 @@
     {
       "source": "file:server.py::Handler",
       "target": "function:server.py:_send_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:server.py::Handler",
+      "target": "function:server.py:_send_lotki_data",
       "type": "contains",
       "direction": "forward",
       "weight": 1.0
@@ -1390,8 +1607,8 @@
       "name": "Application",
       "description": "",
       "nodeIds": [
+        "file:.mcp.json",
         "file:AGENTS.md",
-        "file:backups/road-progress-2026-08-11_14-31-06_928.json",
         "file:backups/road-progress-2026-08-11_14-31-21_644.json",
         "file:backups/road-progress-2026-08-13_19-56-04_857.json",
         "file:backups/road-progress-2026-08-13_20-16-51_596.json",
@@ -1441,13 +1658,26 @@
         "file:backups/road-progress-2026-08-15_18-35-36_578.json",
         "file:backups/road-progress-2026-08-15_18-35-37_812.json",
         "file:backups/road-progress-2026-08-15_18-35-41_029.json",
+        "file:backups/road-progress-2026-08-15_20-12-43_949.json",
         "file:export_word.py",
+        "file:lotki-data.json",
+        "file:lotki.html",
         "file:road-progress-data.json",
         "file:road-progress.html",
         "file:server.py",
         "file:skills-lock.json"
       ],
       "display_order": 0,
+      "order_basis": "canonical"
+    },
+    {
+      "id": "layer:config",
+      "name": "Config",
+      "description": "",
+      "nodeIds": [
+        "file:.claude/CLAUDE.md"
+      ],
+      "display_order": 1,
       "order_basis": "canonical"
     }
   ],
@@ -1490,8 +1720,8 @@
       "path": "",
       "layerId": "layer:application",
       "nodeIds": [
+        "file:.mcp.json",
         "file:AGENTS.md",
-        "file:backups/road-progress-2026-08-11_14-31-06_928.json",
         "file:backups/road-progress-2026-08-11_14-31-21_644.json",
         "file:backups/road-progress-2026-08-13_19-56-04_857.json",
         "file:backups/road-progress-2026-08-13_20-16-51_596.json",
@@ -1541,7 +1771,10 @@
         "file:backups/road-progress-2026-08-15_18-35-36_578.json",
         "file:backups/road-progress-2026-08-15_18-35-37_812.json",
         "file:backups/road-progress-2026-08-15_18-35-41_029.json",
+        "file:backups/road-progress-2026-08-15_20-12-43_949.json",
         "file:export_word.py",
+        "file:lotki-data.json",
+        "file:lotki.html",
         "file:road-progress-data.json",
         "file:road-progress.html",
         "file:server.py",
