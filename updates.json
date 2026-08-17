@@ -1,8 +1,8 @@
 {
-  "version": "2026.08.17-a9b544b",
+  "version": "2026.08.17-0391857",
   "date": "2026-08-17",
   "title": "Обновление ProgressBarsOpen",
   "changes": [
-    "Add automatic updates metadata"
+    "Удалён временный файл"
   ]
 }
