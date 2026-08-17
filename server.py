@@ -2,7 +2,9 @@
 """Локальный сервер: открывает программу и сохраняет данные в road-progress-data.json."""
 
 import json
+import subprocess
 import sys
+import threading
 import webbrowser
 from datetime import datetime
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -21,6 +23,68 @@ LOTKI_DATA_FILE = DIR / "lotki-data.json"
 BACKUP_DIR = DIR / "backups"
 PORT = 8765
 MAX_BACKUPS = 50
+LAUNCHER_FILE = DIR / "1.Запуск_с_обновлением.cmd"
+
+
+def _git_update_status():
+    """Fetch origin and report whether origin/main has newer commits."""
+    try:
+        fetch = subprocess.run(
+            ["git", "fetch", "origin"],
+            cwd=DIR,
+            capture_output=True,
+            text=True,
+            timeout=45,
+            check=False,
+        )
+        if fetch.returncode != 0:
+            return {"ok": False, "reason": "Не удалось проверить GitHub."}
+
+        status = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=DIR,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        if status.returncode != 0:
+            return {"ok": False, "reason": "Не удалось определить состояние проекта."}
+        if status.stdout.strip():
+            return {
+                "ok": True,
+                "updateAvailable": False,
+                "blocked": True,
+                "reason": "Обновление остановлено: найдены локальные изменения файлов программы.",
+            }
+
+        commits = subprocess.run(
+            ["git", "rev-list", "--count", "HEAD..origin/main"],
+            cwd=DIR,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        if commits.returncode != 0:
+            return {"ok": False, "reason": "Не удалось сравнить версии проекта."}
+        behind = int(commits.stdout.strip() or "0")
+        remote_head = subprocess.run(
+            ["git", "rev-parse", "origin/main"],
+            cwd=DIR,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        return {
+            "ok": True,
+            "updateAvailable": behind > 0,
+            "behind": behind,
+            "remoteHead": remote_head.stdout.strip() if remote_head.returncode == 0 else "",
+        }
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return {"ok": False, "reason": "Не удалось проверить обновления через Git."}
 
 
 def _write_json_file(path: Path, data: dict):
@@ -266,6 +330,9 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/backups":
             self._send_backups()
             return
+        if path == "/api/update-status":
+            self._send_update_status()
+            return
         if path == "/api/export/excel":
             self._export_excel()
             return
@@ -304,7 +371,46 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/undo":
             self._undo_last_change()
             return
+        if path == "/api/update":
+            self._start_update()
+            return
         self.send_error(404)
+
+    def _send_update_status(self):
+        result = _git_update_status()
+        body = json.dumps(result, ensure_ascii=False).encode("utf-8")
+        self.send_response(200 if result.get("ok") else 503)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _start_update(self):
+        if not LAUNCHER_FILE.is_file():
+            self.send_error(500, "Файл запуска обновления не найден")
+            return
+
+        body = json.dumps({"ok": True}, ensure_ascii=False).encode("utf-8")
+        self.send_response(202)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+        self.wfile.flush()
+
+        creation_flags = getattr(subprocess, "CREATE_NEW_CONSOLE", 0)
+        try:
+            subprocess.Popen(
+                ["cmd.exe", "/c", str(LAUNCHER_FILE), "--update"],
+                cwd=DIR,
+                creationflags=creation_flags,
+            )
+        except OSError:
+            return
+
+        # Let the HTTP response reach the browser before stopping this server.
+        threading.Timer(0.8, self.server.shutdown).start()
 
     def _send_data(self):
         if DATA_FILE.is_file():

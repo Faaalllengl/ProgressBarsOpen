@@ -8,6 +8,14 @@ set "OK=[ OK ]"
 set "INFO=[ .. ]"
 set "WARN=[ !! ]"
 set "ERR=[ERR ]"
+set "SERVER=%~dp0server.py"
+set "IS_RUNTIME_UPDATE=0"
+if /i "%~1"=="--update" set "IS_RUNTIME_UPDATE=1"
+
+if "%IS_RUNTIME_UPDATE%"=="1" (
+  echo %INFO% Ожидание остановки текущей версии...
+  timeout /t 3 /nobreak >nul
+)
 
 echo.
 echo ============================================================
@@ -22,14 +30,7 @@ echo %OK% Git найден
 
 echo.
 echo %INFO% Проверка локальных изменений кода...
-for /f "delims=" %%S in ('git status --porcelain 2^>nul') do (
-  echo %WARN% Найдены локальные изменения:
-  git status --short
-  echo.
-  echo Сначала сохраните их в отдельный коммит или разберите вручную.
-  echo Автоматическое обновление остановлено, чтобы не затереть работу.
-  goto :error
-)
+for /f "delims=" %%S in ('git status --porcelain 2^>nul') do goto :dirty_worktree
 echo %OK% Локальных изменений нет
 
 echo.
@@ -50,11 +51,30 @@ if "%BEHIND%"=="0" (
   echo %OK% Проект обновлён
 )
 
+:launch
 echo.
 echo %INFO% Запуск программы...
 echo ------------------------------------------------------------
-call start.bat
+
+where python >nul 2>&1
+if errorlevel 1 goto :try_py
+python "%SERVER%"
 set "EXIT_CODE=%errorlevel%"
+goto :server_finished
+
+:try_py
+where py >nul 2>&1
+if errorlevel 1 goto :python_error
+py "%SERVER%"
+set "EXIT_CODE=%errorlevel%"
+goto :server_finished
+
+:dirty_worktree
+echo %WARN% Найдены локальные изменения. Проверка обновлений пропущена.
+echo %INFO% Программа будет запущена без обновления.
+goto :launch
+
+:server_finished
 echo ------------------------------------------------------------
 if not "%EXIT_CODE%"=="0" goto :error
 echo %OK% Работа завершена
@@ -75,9 +95,14 @@ echo %ERR% Не удалось выполнить безопасное обно�
 echo Возможно, локальная ветка разошлась с GitHub.
 goto :error
 
+:python_error
+echo %ERR% Python не найден в системе.
+echo Установите Python и включите Add python.exe to PATH.
+goto :error
+
 :error
 echo.
-echo Обновление или запуск остановлены.
+echo Запуск или обновление остановлены.
 pause
 exit /b 1
 
