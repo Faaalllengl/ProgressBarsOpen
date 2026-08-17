@@ -38,8 +38,14 @@ echo %INFO% Проверка обновлений на GitHub...
 git fetch origin
 if errorlevel 1 goto :network_error
 
-set "BEHIND=0"
-for /f "delims=" %%N in ('git rev-list --count HEAD..origin/main 2^>nul') do set "BEHIND=%%N"
+set "BRANCH="
+for /f "delims=" %%B in ('git branch --show-current 2^>nul') do set "BRANCH=%%B"
+if not defined BRANCH goto :branch_error
+set "REMOTE_REF=origin/%BRANCH%"
+
+set "BEHIND="
+for /f "delims=" %%N in ('git rev-list --count HEAD..%REMOTE_REF% 2^>nul') do set "BEHIND=%%N"
+if not defined BEHIND goto :compare_error
 
 if "%BEHIND%"=="0" (
   echo %OK% Установлена последняя версия
@@ -88,6 +94,15 @@ goto :error
 :network_error
 echo %ERR% Не удалось проверить GitHub.
 echo Проверьте подключение к интернету.
+goto :error
+
+:branch_error
+echo %ERR% Не удалось определить текущую ветку Git.
+goto :error
+
+:compare_error
+echo %ERR% Не удалось сравнить локальную ветку с GitHub.
+echo Проверьте, что на GitHub существует ветка %BRANCH%.
 goto :error
 
 :update_error
