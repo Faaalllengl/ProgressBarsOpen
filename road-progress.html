@@ -1408,6 +1408,7 @@
             <button class="small-btn" id="backupBtn" title="Создать резервную копию сейчас">Резервная копия</button>
             <button class="small-btn" id="undoBtn" title="Отменить последнее сохранённое изменение">Отменить последнее</button>
             <button class="small-btn" id="restoreBtn" title="Выбрать и восстановить одну из копий">Восстановить</button>
+            <button class="small-btn" id="checkUpdatesBtn" title="Проверить наличие новой версии вручную">Проверить обновления</button>
           </div>
           <span class="status" id="statusMsg">загрузка…</span>
         </div>
@@ -1877,13 +1878,27 @@
           setStatus("запустите файл запуска — данные будут в " + DATA_FILE_NAME);
         }
 
-        async function checkForUpdates() {
+        async function checkForUpdates(manual = false) {
           try {
             const statusRes = await fetch("/api/update-status", { cache: "no-store" });
-            if (!statusRes.ok) return;
-            const status = await statusRes.json();
-            if (!status.updateAvailable || !status.remoteHead) return;
-            if (localStorage.getItem(UPDATE_STORAGE_KEY) === status.remoteHead) return;
+            const status = await statusRes.json().catch(() => ({}));
+            if (!statusRes.ok) {
+              if (manual) setStatus(status.reason || "Не удалось проверить обновления", false);
+              return false;
+            }
+            if (status.blocked) {
+              if (manual) setStatus(status.reason || "Проверка обновлений заблокирована", false);
+              return false;
+            }
+            if (!status.updateAvailable || !status.remoteHead) {
+              if (manual) setStatus("Установлена последняя версия", true);
+              return false;
+            }
+            if (localStorage.getItem(UPDATE_STORAGE_KEY) === status.remoteHead) {
+              if (manual) setStatus("Установлена последняя версия", true);
+              $("#updatesRestoreBtn").hidden = false;
+              return false;
+            }
 
             let updates = { version: "новая версия", changes: [] };
             try {
@@ -1908,9 +1923,22 @@
             $("#updatesUpdateBtn").textContent = "Обновить";
             $("#updatesRestoreBtn").hidden = true;
             $("#updatesModal").hidden = false;
+            if (manual) setStatus("Доступно новое обновление", true);
+            return true;
           } catch (e) {
             console.warn("Не удалось проверить обновления", e);
+            if (manual) setStatus("Не удалось проверить обновления", false);
+            return false;
           }
+        }
+
+        async function manualCheckForUpdates() {
+          const button = $("#checkUpdatesBtn");
+          button.disabled = true;
+          button.textContent = "Проверка…";
+          await checkForUpdates(true);
+          button.disabled = false;
+          button.textContent = "Проверить обновления";
         }
 
         function closeUpdates() {
@@ -2804,6 +2832,7 @@
           $("#updatesModal").hidden = false;
         });
         $("#updatesUpdateBtn").addEventListener("click", applyUpdate);
+        $("#checkUpdatesBtn").addEventListener("click", manualCheckForUpdates);
         $("#pkSearchBtn").addEventListener("click", () => { const pk = parseFloat($("#pkSearch").value); if (!Number.isFinite(pk)) return; let found = null; state.layers.forEach((layer) => layer.segments.forEach((seg) => { if (pk >= seg.s && pk <= seg.e) found = layer.id; })); if (!found) return alert("На этом ПК нет выполненного участка."); openEditorId = found; renderLayers(); const row = layersEl.querySelector(`.editor[data-layer-id="${found}"]`); if (row) row.scrollIntoView({behavior:"smooth", block:"center"}); });
         $("#newLayerName").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#addLayerBtn").click(); } });
         $("#pkSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#pkSearchBtn").click(); } });
