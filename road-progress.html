@@ -1883,7 +1883,8 @@
             const statusRes = await fetch("/api/update-status", { cache: "no-store" });
             const status = await statusRes.json().catch(() => ({}));
             if (!statusRes.ok) {
-              if (manual) setStatus(status.reason || "Не удалось проверить обновления", false);
+              const detail = status.detail ? `: ${status.detail}` : "";
+              if (manual) setStatus((status.reason || "Не удалось проверить обновления") + detail, false);
               return false;
             }
             if (status.blocked) {

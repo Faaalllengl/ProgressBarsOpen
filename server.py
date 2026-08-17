@@ -27,8 +27,18 @@ LAUNCHER_FILE = DIR / "1.Запуск_с_обновлением.cmd"
 
 
 def _git_update_status():
-    """Fetch origin and report whether origin/main has newer commits."""
+    """Fetch origin and report whether the checked-out branch has newer commits."""
     try:
+        branch_result = subprocess.run(
+            ["git", "branch", "--show-current"],
+            cwd=DIR,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        branch = branch_result.stdout.strip() or "main"
+        remote_ref = f"origin/{branch}"
         fetch = subprocess.run(
             ["git", "fetch", "origin"],
             cwd=DIR,
@@ -38,7 +48,12 @@ def _git_update_status():
             check=False,
         )
         if fetch.returncode != 0:
-            return {"ok": False, "reason": "Не удалось проверить GitHub."}
+            detail = (fetch.stderr or fetch.stdout).strip()
+            return {
+                "ok": False,
+                "reason": "Не удалось проверить GitHub через Git.",
+                "detail": detail[-500:] if detail else "Команда git fetch завершилась с ошибкой.",
+            }
 
         status = subprocess.run(
             ["git", "status", "--porcelain"],
@@ -59,7 +74,7 @@ def _git_update_status():
             }
 
         commits = subprocess.run(
-            ["git", "rev-list", "--count", "HEAD..origin/main"],
+            ["git", "rev-list", "--count", f"HEAD..{remote_ref}"],
             cwd=DIR,
             capture_output=True,
             text=True,
@@ -67,10 +82,15 @@ def _git_update_status():
             check=False,
         )
         if commits.returncode != 0:
-            return {"ok": False, "reason": "Не удалось сравнить версии проекта."}
+            detail = (commits.stderr or commits.stdout).strip()
+            return {
+                "ok": False,
+                "reason": f"Не удалось сравнить ветку {branch} с GitHub.",
+                "detail": detail[-500:] if detail else f"Ветка {remote_ref} не найдена.",
+            }
         behind = int(commits.stdout.strip() or "0")
         remote_head = subprocess.run(
-            ["git", "rev-parse", "origin/main"],
+            ["git", "rev-parse", remote_ref],
             cwd=DIR,
             capture_output=True,
             text=True,
@@ -83,8 +103,12 @@ def _git_update_status():
             "behind": behind,
             "remoteHead": remote_head.stdout.strip() if remote_head.returncode == 0 else "",
         }
-    except (OSError, ValueError, subprocess.TimeoutExpired):
-        return {"ok": False, "reason": "Не удалось проверить обновления через Git."}
+    except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
+        return {
+            "ok": False,
+            "reason": "Не удалось проверить обновления через Git.",
+            "detail": str(exc) or "Неизвестная ошибка Git.",
+        }
 
 
 def _write_json_file(path: Path, data: dict):
