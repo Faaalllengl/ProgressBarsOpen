@@ -1,8 +1,8 @@
 {
-  "version": "2026.08.18-594989f",
+  "version": "2026.08.18-babb0fc",
   "date": "2026-08-18",
   "title": "Обновление ProgressBarsOpen",
   "changes": [
-    "проверка"
+    "Remove stray text from instructions"
   ]
 }
