@@ -97,11 +97,28 @@ def _git_update_status():
             timeout=10,
             check=False,
         )
+        update_details = {}
+        remote_updates = subprocess.run(
+            ["git", "show", f"{remote_ref}:updates.json"],
+            cwd=DIR,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        if remote_updates.returncode == 0:
+            try:
+                parsed_updates = json.loads(remote_updates.stdout)
+                if isinstance(parsed_updates, dict):
+                    update_details = parsed_updates
+            except json.JSONDecodeError:
+                pass
         return {
             "ok": True,
             "updateAvailable": behind > 0,
             "behind": behind,
             "remoteHead": remote_head.stdout.strip() if remote_head.returncode == 0 else "",
+            "updateDetails": update_details,
         }
     except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
         return {

@@ -51,10 +51,14 @@ if "%BEHIND%"=="0" (
   echo %OK% Установлена последняя версия
 ) else (
   echo %INFO% Найдено новых коммитов: %BEHIND%
-  echo %INFO% Обновление проекта...
-  git pull --ff-only
-  if errorlevel 1 goto :update_error
-  echo %OK% Проект обновлён
+  if "%IS_RUNTIME_UPDATE%"=="1" (
+    echo %INFO% Обновление проекта...
+    git pull --ff-only
+    if errorlevel 1 goto :update_error
+    echo %OK% Проект обновлён
+  ) else (
+    echo %INFO% Обновление будет предложено в интерфейсе.
+  )
 )
 
 :launch

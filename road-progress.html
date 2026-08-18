@@ -1901,12 +1901,14 @@
               return false;
             }
 
-            let updates = { version: "новая версия", changes: [] };
-            try {
-              const detailsRes = await fetch("updates.json", { cache: "no-store" });
-              if (detailsRes.ok) updates = await detailsRes.json();
-            } catch (e) {
-              /* список изменений необязателен для показа уведомления */
+            let updates = status.updateDetails || { version: "новая версия", changes: [] };
+            if (!status.updateDetails || !Object.keys(status.updateDetails).length) {
+              try {
+                const detailsRes = await fetch("updates.json", { cache: "no-store" });
+                if (detailsRes.ok) updates = await detailsRes.json();
+              } catch (e) {
+                /* список изменений необязателен для показа уведомления */
+              }
             }
             if (!Array.isArray(updates.changes)) updates.changes = [];
             currentUpdateHead = status.remoteHead;
