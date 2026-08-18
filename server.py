@@ -103,6 +103,7 @@ def _git_update_status():
             cwd=DIR,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=10,
             check=False,
         )

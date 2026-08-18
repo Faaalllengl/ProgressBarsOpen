@@ -47,19 +47,21 @@ set "BEHIND="
 for /f "delims=" %%N in ('git rev-list --count HEAD..%REMOTE_REF% 2^>nul') do set "BEHIND=%%N"
 if not defined BEHIND goto :compare_error
 
-if "%BEHIND%"=="0" (
-  echo %OK% Установлена последняя версия
-) else (
-  echo %INFO% Найдено новых коммитов: %BEHIND%
-  if "%IS_RUNTIME_UPDATE%"=="1" (
-    echo %INFO% Обновление проекта...
-    git pull --ff-only
-    if errorlevel 1 goto :update_error
-    echo %OK% Проект обновлён
-  ) else (
-    echo %INFO% Обновление будет предложено в интерфейсе.
-  )
-)
+if "%BEHIND%"=="0" goto :no_update
+echo %INFO% Найдено новых коммитов: %BEHIND%
+if "%IS_RUNTIME_UPDATE%"=="1" goto :perform_update
+echo %INFO% Обновление будет предложено в интерфейсе.
+goto :launch
+
+:perform_update
+echo %INFO% Обновление проекта...
+git pull --ff-only
+if errorlevel 1 goto :update_error
+echo %OK% Проект обновлён
+goto :launch
+
+:no_update
+echo %OK% Установлена последняя версия
 
 :launch
 echo.
