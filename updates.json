@@ -1,8 +1,8 @@
 {
-  "version": "2026.08.18-babb0fc",
-  "date": "2026-08-18",
+  "version": "2026.08.21-ef33ac7",
+  "date": "2026-08-21",
   "title": "Обновление ProgressBarsOpen",
   "changes": [
-    "Remove stray text from instructions"
+    "Удалить устаревший ярлык запуска"
   ]
 }
