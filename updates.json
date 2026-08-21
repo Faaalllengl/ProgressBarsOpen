@@ -3,6 +3,10 @@
   "date": "2026-08-21",
   "title": "Обновление ProgressBarsOpen",
   "changes": [
+<<<<<<< HEAD
     "Удалить устаревший ярлык запуска"
+=======
+    "Тестовый коммит"
+>>>>>>> 47e5f23 (Remove stray text from installation instructions)
   ]
 }
