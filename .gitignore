@@ -5,4 +5,6 @@ backups/
 .repowise/
 .claude/
 .vscode/
+.codex/
+Быстрый_коммит.cmd
 __pycache__/
