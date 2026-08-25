@@ -963,6 +963,10 @@
         border-bottom: 2px solid var(--pdf-accent);
         font-size: 15px;
       }
+      .pdf-report .pdf-front-detail {
+        break-before: page;
+        page-break-before: always;
+      }
       .pdf-report .pdf-front-summary {
         margin: 0 0 12px;
         color: var(--color-report-muted);
@@ -2684,11 +2688,13 @@
         <tr><th>Слой</th><th>%</th><th>Выполнено</th><th>Осталось</th><th>Уложенные участки (ПК)</th></tr>
         ${tableRows}
       </table>
-      <h3 class="pdf-section-title">Детализация фронтов</h3>
-      <table>
-        <tr><th>Слой</th><th>Основание</th><th>Допустимые интервалы</th></tr>
-        ${frontTableRows}
-      </table>
+      <div class="pdf-front-detail" data-pdf-front-detail>
+        <h3 class="pdf-section-title">Детализация фронтов</h3>
+        <table>
+          <tr><th>Слой</th><th>Основание</th><th>Допустимые интервалы</th></tr>
+          ${frontTableRows}
+        </table>
+      </div>
       <div class="pdf-foot">1 пикет (ПК) = 100 м. Отчёт для печати.</div>`;
           return el;
         }
@@ -2730,18 +2736,30 @@
           const report = buildPdfReportElement();
           document.body.appendChild(report);
           try {
-            const canvas = await html2canvas(report, {
-              scale: 2,
-              backgroundColor: "#ffffff",
-              useCORS: true,
-              logging: false,
-            });
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF("p", "mm", "a4");
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
             const margin = 8;
             const usableWidth = pageWidth - margin * 2;
+            const frontDetail = report.querySelector("[data-pdf-front-detail]");
+            if (frontDetail) {
+              const pageCssHeight = (pageHeight - margin * 2) * (report.offsetWidth / usableWidth);
+              const remainder = frontDetail.offsetTop % pageCssHeight;
+              const gap = remainder > 1 ? pageCssHeight - remainder : 0;
+              if (gap > 1) {
+                const spacer = document.createElement("div");
+                spacer.style.height = gap + "px";
+                spacer.setAttribute("aria-hidden", "true");
+                frontDetail.parentNode.insertBefore(spacer, frontDetail);
+              }
+            }
+            const canvas = await html2canvas(report, {
+              scale: 2,
+              backgroundColor: "#ffffff",
+              useCORS: true,
+              logging: false,
+            });
             const imgWidth = usableWidth;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             let heightLeft = imgHeight;
