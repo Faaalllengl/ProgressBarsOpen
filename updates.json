@@ -1,8 +1,8 @@
 {
-  "version": "2026.08.25-07db6e3",
+  "version": "2026.08.25-e0f69fb",
   "date": "2026-08-25",
   "title": "Обновление ProgressBarsOpen",
   "changes": [
-    "Update AGENTS metadata"
+    "Добавлен фронт работ"
   ]
 }
