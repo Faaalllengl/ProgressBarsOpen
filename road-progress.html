@@ -963,10 +963,6 @@
         border-bottom: 2px solid var(--pdf-accent);
         font-size: 15px;
       }
-      .pdf-report .pdf-front-detail {
-        break-before: page;
-        page-break-before: always;
-      }
       .pdf-report .pdf-front-summary {
         margin: 0 0 12px;
         color: var(--color-report-muted);
@@ -1470,7 +1466,8 @@
 
         <div class="toolbar">
           <div class="toolbar-actions">
-            <button class="small-btn" id="pdfBtn" title="Собрать печатный отчёт в PDF">Скачать отчёт PDF</button>
+             <button class="small-btn" id="pdfBtn" title="Скачать сводку по слоям в PDF">Скачать сводку PDF</button>
+             <button class="small-btn" id="frontPdfBtn" title="Скачать отдельный отчёт по фронтам работ">Скачать отчёт по фронтам PDF</button>
             <button class="small-btn" id="wordBtn" title="Скачать Word-отчёт с таблицами и участками">Скачать отчёт Word</button>
             <button class="small-btn" id="excelBtn" title="Выгрузить книгу Excel со сводкой и участками">Скачать Excel</button>
             <button class="small-btn" id="importExcelBtn" title="Загрузить лист 'Участки' из Excel">Импорт Excel</button>
@@ -2597,7 +2594,8 @@
           return html;
         }
 
-        function buildPdfReportElement() {
+        function buildPdfReportElement(mode = "summary") {
+          const frontReport = mode === "front";
           const start = state.start;
           const total = state.total;
           const length = Math.max(0, total - start);
@@ -2606,13 +2604,13 @@
           state.layers.forEach((layer, index) => {
             const stats = displayLayerStats(layer, start, total);
             const front = allowedFrontForLayer(index, start, total);
-            const frontSegs = front
+             const frontSegs = frontReport ? front
               .map((seg) => {
                 const left = length > 0 ? Math.max(0, Math.min(100, ((seg.s - start) / length) * 100)) : 0;
                 const width = Math.max(0.15, Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0));
                 return `<div class="pdf-front-seg" title="Допустимый фронт: ${fmt(seg.s)} — ${fmt(seg.e)} ПК" style="left:${left}%;width:${width}%"></div>`;
               })
-              .join("");
+               .join("") : "";
             const segs = layer.segments
               .map((seg) => {
                 const left = length > 0 ? Math.max(0, Math.min(100, ((seg.s - start) / length) * 100)) : 0;
@@ -2625,7 +2623,7 @@
               .join("");
             chartHtml += `
         <div class="pdf-row">
-           <div class="pdf-label"><b>${layer.name}</b><br>${stats.pct.toFixed(1)}% · ${fmtKm(stats.covered)} км<br>ост. ${fmtKm(stats.remaining)} км<br><span class="pdf-front-summary">фронт: ${fmtKm(intervalsLength(front))} км</span></div>
+           <div class="pdf-label"><b>${layer.name}</b><br>${stats.pct.toFixed(1)}% · ${fmtKm(stats.covered)} км<br>ост. ${fmtKm(stats.remaining)} км${frontReport ? `<br><span class="pdf-front-summary">фронт: ${fmtKm(intervalsLength(front))} км</span>` : ""}</div>
            <div class="pdf-track-wrap"><div class="pdf-track">${frontSegs}${segs}</div></div>
          </div>`;
           });
@@ -2663,8 +2661,18 @@
 
           const el = document.createElement("div");
           el.className = "pdf-report";
+          const reportTable = frontReport
+            ? `<h2 class="pdf-section-title">Детализация фронтов</h2>
+               <table>
+                 <tr><th>Слой</th><th>Основание</th><th>Допустимые интервалы</th></tr>
+                 ${frontTableRows}
+               </table>`
+            : `<table>
+                 <tr><th>Слой</th><th>%</th><th>Выполнено</th><th>Осталось</th><th>Уложенные участки (ПК)</th></tr>
+                 ${tableRows}
+               </table>`;
           el.innerHTML = `
-      <h1>Прогресс укладки слоёв</h1>
+      <h1>${frontReport ? "Отчёт по допустимым фронтам работ" : "Прогресс укладки слоёв"}</h1>
       <div class="pdf-sub">Дата: ${reportDate()} · Протяжённость: ${fmtKm(length)} км (ПК ${fmt(start)} — ${fmt(total)} · ${metersLabel(length)})</div>
       <div class="pdf-overall">
         <div class="pdf-overall-main">
@@ -2680,21 +2688,11 @@
           <div class="pdf-overall-legend"><span>Уложено: ${fmtKm(overall.covered)} км</span><span>Осталось: ${fmtKm(overall.remaining)} км</span></div>
         </div>
       </div>
-      <h2 class="pdf-section-title">Допустимый фронт работ</h2>
+      ${frontReport ? `<h2 class="pdf-section-title">Допустимый фронт работ</h2>
       <div class="pdf-front-summary">Фронт показывает участки, где нижележащий слой уже готов, а текущий слой ещё не уложен. Для ЗМП используется весь объект как основание.</div>
-      <div class="pdf-legend"><span class="pdf-legend-item"><span class="pdf-legend-swatch front"></span> допустимый фронт</span><span class="pdf-legend-item"><span class="pdf-legend-swatch" style="background:#777"></span> уложенный участок</span></div>
+      <div class="pdf-legend"><span class="pdf-legend-item"><span class="pdf-legend-swatch front"></span> допустимый фронт</span><span class="pdf-legend-item"><span class="pdf-legend-swatch" style="background:#777"></span> уложенный участок</span></div>` : ""}
       <div class="pdf-chart">${chartHtml}</div>
-      <table>
-        <tr><th>Слой</th><th>%</th><th>Выполнено</th><th>Осталось</th><th>Уложенные участки (ПК)</th></tr>
-        ${tableRows}
-      </table>
-      <div class="pdf-front-detail" data-pdf-front-detail>
-        <h3 class="pdf-section-title">Детализация фронтов</h3>
-        <table>
-          <tr><th>Слой</th><th>Основание</th><th>Допустимые интервалы</th></tr>
-          ${frontTableRows}
-        </table>
-      </div>
+      ${reportTable}
       <div class="pdf-foot">1 пикет (ПК) = 100 м. Отчёт для печати.</div>`;
           return el;
         }
@@ -2723,17 +2721,17 @@
           return html;
         }
 
-        async function exportPdf() {
+        async function exportPdf(mode = "summary") {
           if (!window.jspdf || !window.html2canvas) {
             alert(
               "Не удалось загрузить библиотеки PDF. Проверьте интернет и обновите страницу.",
             );
             return;
           }
-          const btn = $("#pdfBtn");
+          const btn = mode === "front" ? $("#frontPdfBtn") : $("#pdfBtn");
           btn.disabled = true;
-          setStatus("формирование PDF…");
-          const report = buildPdfReportElement();
+          setStatus(mode === "front" ? "формирование отчёта по фронтам…" : "формирование сводки PDF…");
+          const report = buildPdfReportElement(mode);
           document.body.appendChild(report);
           try {
             const { jsPDF } = window.jspdf;
@@ -2742,18 +2740,6 @@
             const pageHeight = pdf.internal.pageSize.getHeight();
             const margin = 8;
             const usableWidth = pageWidth - margin * 2;
-            const frontDetail = report.querySelector("[data-pdf-front-detail]");
-            if (frontDetail) {
-              const pageCssHeight = (pageHeight - margin * 2) * (report.offsetWidth / usableWidth);
-              const remainder = frontDetail.offsetTop % pageCssHeight;
-              const gap = remainder > 1 ? pageCssHeight - remainder : 0;
-              if (gap > 1) {
-                const spacer = document.createElement("div");
-                spacer.style.height = gap + "px";
-                spacer.setAttribute("aria-hidden", "true");
-                frontDetail.parentNode.insertBefore(spacer, frontDetail);
-              }
-            }
             const canvas = await html2canvas(report, {
               scale: 2,
               backgroundColor: "#ffffff",
@@ -2783,8 +2769,9 @@
               heightLeft -= pageHeight - margin * 2;
             }
 
-            pdf.save("otchet-progress-" + fileStamp() + ".pdf");
-            setStatus("PDF сохранён", true);
+            const filePrefix = mode === "front" ? "otchet-fronty" : "otchet-progress";
+            pdf.save(filePrefix + "-" + fileStamp() + ".pdf");
+            setStatus(mode === "front" ? "отчёт по фронтам сохранён" : "сводка PDF сохранена", true);
           } catch (err) {
             console.error(err);
             setStatus("ошибка PDF");
@@ -2969,7 +2956,8 @@
           scheduleSave();
         });
 
-        $("#pdfBtn").addEventListener("click", exportPdf);
+         $("#pdfBtn").addEventListener("click", () => exportPdf("summary"));
+         $("#frontPdfBtn").addEventListener("click", () => exportPdf("front"));
         $("#wordBtn").addEventListener("click", exportWord);
         $("#excelBtn").addEventListener("click", exportExcel);
         $("#importExcelBtn").addEventListener("click", () => $("#excelFile").click());
