@@ -8,7 +8,6 @@ backups/
 .codex/
 Быстрый_коммит.cmd
 __pycache__/
-AGENTS.md
 .mcp.json
 skills-lock.json
 enc_test.txt
