@@ -1678,8 +1678,9 @@
             Math.max(0, Number(layer.excludedPk) || 0),
           );
           const total = routeLength;
-          const covered = Math.max(0, layerCovered(layer) - excluded);
-          const remaining = Math.max(0, total - covered);
+          const rawCovered = layerCovered(layer);
+          const covered = Math.max(0, rawCovered - excluded);
+          const remaining = Math.max(0, total - rawCovered);
           const pct = total > 0 ? (covered / total) * 100 : 0;
           return { covered, remaining, total, excluded, pct };
         }
@@ -1692,12 +1693,12 @@
               const stats = displayLayerStats(layer, start, end);
               result.covered += stats.covered;
               result.totalLength += stats.total;
+              result.remaining += stats.remaining;
               return result;
             },
-            { covered: 0, totalLength: 0 },
+            { covered: 0, totalLength: 0, remaining: 0 },
           );
-          const { covered, totalLength } = totals;
-          const remaining = Math.max(0, totalLength - covered);
+          const { covered, totalLength, remaining } = totals;
           const pct = totalLength > 0 ? (covered / totalLength) * 100 : 0;
           return { covered, remaining, totalLength, pct };
         }
@@ -2235,7 +2236,7 @@
       </div>
       <div class="seg-row">
         Вычесть из выполненного:
-        <input type="number" inputmode="decimal" min="0" step="0.01" value="${Number(layer.excludedPk) || 0}" data-excluded-layer="${layer.id}" title="Длина, которая вычитается из выполненного и добавляется к остатку этого слоя">
+        <input type="number" inputmode="decimal" min="0" step="0.01" value="${Number(layer.excludedPk) || 0}" data-excluded-layer="${layer.id}" title="Длина, которая вычитается из выполненного; остаток считается по фактической укладке">
         ПК
       </div>
       ${rows || '<div class="seg-row" style="color:var(--text-faint)">участков пока нет</div>'}
