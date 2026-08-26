@@ -24,7 +24,10 @@ def _covered(layer: dict) -> float:
 def _stats(layer: dict, start: float, end: float) -> tuple[float, float, float]:
     covered = _covered(layer)
     route_length = max(0.0, end - start)
-    excluded = min(route_length, max(0.0, float(layer.get("excludedPk", 0) or 0)))
+    excluded = min(
+        route_length,
+        sum(max(0.0, min(float(s["e"]), 277.92) - max(float(s["s"]), 275.78)) for s in layer.get("segments", [])),
+    )
     total = route_length
     raw_covered = covered
     covered = max(0.0, raw_covered - excluded)

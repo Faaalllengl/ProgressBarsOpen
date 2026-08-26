@@ -311,7 +311,11 @@ def _export_excel(data):
         start = float(state.get("start", 0))
         end = float(state["total"])
         route_length = max(0, end - start)
-        excluded = min(route_length, max(0, float(layer.get("excludedPk", 0) or 0)))
+        excluded = sum(
+            max(0, min(seg["e"], 277.92) - max(seg["s"], 275.78))
+            for seg in layer.get("segments", [])
+        )
+        excluded = min(route_length, excluded)
         layer_length = route_length
         covered = max(0, covered - excluded)
         actual = round(covered / layer_length * 100, 1) if layer_length else 0

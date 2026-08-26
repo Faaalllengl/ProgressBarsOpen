@@ -1505,6 +1505,9 @@
       (function () {
         const DEFAULT_START = 0;
         const DEFAULT_TOTAL = 358.79;
+        const BRIDGE_START = 275.78;
+        const BRIDGE_END = 277.92;
+        const BRIDGE_LEN_PK = BRIDGE_END - BRIDGE_START;
         const DEFAULT_LAYERS = [
           {
             id: "shma",
@@ -1623,6 +1626,12 @@
             0,
           );
         }
+        function bridgeOverlapLength(seg) {
+          return Math.max(0, Math.min(seg.e, BRIDGE_END) - Math.max(seg.s, BRIDGE_START));
+        }
+        function layerBridgeExcluded(layer) {
+          return layer.segments.reduce((sum, seg) => sum + bridgeOverlapLength(seg), 0);
+        }
         function normalizedIntervals(segments, start, end) {
           const intervals = (segments || [])
             .map((seg) => ({
@@ -1671,12 +1680,9 @@
             ? `<b>фронт: ${fmtKm(length)} км</b><br>${intervalsLabel(intervals)} ПК`
             : "фронт: нет доступных участков";
         }
-        function layerStats(layer, start, end) {
+        function layerStats(layer, start, end, excludeBridge = true) {
           const routeLength = Math.max(0, end - start);
-          const excluded = Math.min(
-            routeLength,
-            Math.max(0, Number(layer.excludedPk) || 0),
-          );
+          const excluded = excludeBridge ? Math.min(routeLength, layerBridgeExcluded(layer)) : 0;
           const total = routeLength;
           const rawCovered = layerCovered(layer);
           const covered = Math.max(0, rawCovered - excluded);
@@ -2235,9 +2241,7 @@
         <input type="date" value="${normalizeDateValue(layer.planDate || "")}" data-plan-date-layer="${layer.id}" title="Дата, к которой относится план">
       </div>
       <div class="seg-row">
-        Вычесть из выполненного:
-        <input type="number" inputmode="decimal" min="0" step="0.01" value="${Number(layer.excludedPk) || 0}" data-excluded-layer="${layer.id}" title="Длина, которая вычитается из выполненного; остаток считается по фактической укладке">
-        ПК
+        Корректировка моста учитывается автоматически по пересечению с ПК ${fmt(BRIDGE_START)}–${fmt(BRIDGE_END)}:
       </div>
       ${rows || '<div class="seg-row" style="color:var(--text-faint)">участков пока нет</div>'}
       <div class="add-row">
@@ -2370,7 +2374,7 @@
           $("#summaryTotal").innerHTML =
             `<div class="summary-hdr">Сводка по слоям</div>
        <div class="summary-meta">Общая протяжённость: <b>${fmtKm(length)} км</b> (ПК ${fmt(start)} — ${fmt(total)} · ${metersLabel(length)})</div>
-       <div class="summary-overall">Общая выполненность объекта: <b>${objectPct.toFixed(1)}%</b><span class="summary-help" tabindex="0" role="img" aria-label="Как считается общая выполненность" data-tooltip="Общая уложенная длина слоёв ÷ сумму длин слоёв после индивидуальных исключений × 100%.">?</span></div>
+       <div class="summary-overall">Общая выполненность объекта: <b>${objectPct.toFixed(1)}%</b><span class="summary-help" tabindex="0" role="img" aria-label="Как считается общая выполненность" data-tooltip="Скорректированная уложенная длина слоёв ÷ суммарную длину слоёв × 100%. Из уложенных отрезков автоматически исключается пересечение с мостом.">?</span></div>
        <div class="summary-meta">Средний план по слоям: <b>${planAvg.toFixed(1)}%</b></div>
        <div class="summary-grid">${rows}</div>`;
           const entries = (activeProject().journal || []).slice(0, 8).map((item) => `<div class="summary-row"><span>${item.date}</span><span><b>${item.action}</b> · ${item.project ? item.project + " · " : ""}${item.detail || ""}</span></div>`).join("");
@@ -2487,7 +2491,7 @@
 
           let layersHtml = "";
           state.bridge.layers.forEach((layer) => {
-            const stats = layerStats(layer, bridgeTotal);
+            const stats = layerStats(layer, BRIDGE_START, BRIDGE_END, false);
             layersHtml += `
         <div class="layer">
           <div class="layer-label" data-bridge-toggle="${layer.id}">
@@ -2526,7 +2530,7 @@
 
           const summaryRows = state.bridge.layers
             .map((layer) => {
-              const stats = layerStats(layer, bridgeTotal);
+              const stats = layerStats(layer, BRIDGE_START, BRIDGE_END, false);
               return `<div class="summary-row">
         <span class="summary-name">${layer.name}</span>
         <span>${stats.pct.toFixed(1)}% · ${fmtKm(stats.covered)} км · ост. ${fmtKm(stats.remaining)} км</span>
@@ -2637,7 +2641,7 @@
                 sortedSegments(layer)
                   .map(
                     (seg) =>
-                      `${fmt(seg.s)}–${fmt(seg.e)} (${fmtKm(seg.e - seg.s)} км)`,
+                      `${fmt(seg.s)}–${fmt(seg.e)} (${fmtKm(Math.max(0, seg.e - seg.s - bridgeOverlapLength(seg)))} км)`,
                   )
                   .join("; ") || "—";
               return `<tr>
