@@ -1,8 +1,8 @@
 {
-  "version": "2026.08.26-8a1cd54",
+  "version": "2026.08.26-87a68cf",
   "date": "2026-08-26",
   "title": "Обновление ProgressBarsOpen",
   "changes": [
-    "Fix"
+    "В PDF и Word-отчётах пикетаж теперь отображается так:"
   ]
 }
