@@ -1605,6 +1605,10 @@
         function fmt(n) {
           return (Math.round(n * 100) / 100).toString().replace(".", ",");
         }
+        function fmtReportPk(value) {
+          const hundredths = Math.max(0, Math.round(Number(value) * 100));
+          return Math.floor(hundredths / 100) + "+" + String(hundredths % 100).padStart(2, "0");
+        }
         function pkToMeters(pk) {
           return Math.round(pk * 100);
         }
@@ -2588,14 +2592,14 @@
             if (isMajor) {
               const tooCloseToEnd = pk > start && total - pk < labelMinGap;
               if (!tooCloseToEnd)
-                html += `<div class="pdf-tick-label" style="left:${pct}%">${Math.round(pk)}</div>`;
+                html += `<div class="pdf-tick-label" style="left:${pct}%">${fmtReportPk(pk)}</div>`;
             }
           }
           if (Math.abs(length % majorStep) >= 0.01) {
             html +=
               '<div class="pdf-tick" style="left:100%;height:10px"></div>';
           }
-          html += `<div class="pdf-tick-label end" style="left:100%">${fmt(total)}</div></div>`;
+          html += `<div class="pdf-tick-label end" style="left:100%">${fmtReportPk(total)}</div></div>`;
           return html;
         }
 
@@ -2613,7 +2617,7 @@
               .map((seg) => {
                 const left = length > 0 ? Math.max(0, Math.min(100, ((seg.s - start) / length) * 100)) : 0;
                 const width = Math.max(0.15, Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0));
-                return `<div class="pdf-front-seg" title="Допустимый фронт: ${fmt(seg.s)} — ${fmt(seg.e)} ПК" style="left:${left}%;width:${width}%"></div>`;
+                return `<div class="pdf-front-seg" title="Допустимый фронт: ${fmtReportPk(seg.s)} — ${fmtReportPk(seg.e)} ПК" style="left:${left}%;width:${width}%"></div>`;
               })
                .join("") : "";
             const segs = layer.segments
@@ -2641,7 +2645,7 @@
                 sortedSegments(layer)
                   .map(
                     (seg) =>
-                      `${fmt(seg.s)}–${fmt(seg.e)} (${fmtKm(Math.max(0, seg.e - seg.s - bridgeOverlapLength(seg)))} км)`,
+                      `${fmtReportPk(seg.s)}–${fmtReportPk(seg.e)} (${fmtKm(Math.max(0, seg.e - seg.s - bridgeOverlapLength(seg)))} км)`,
                   )
                   .join("; ") || "—";
               return `<tr>
@@ -2657,7 +2661,7 @@
             .map((layer, index) => {
               const front = allowedFrontForLayer(index, start, total);
               const frontList = front.length
-                ? `${intervalsLabel(front)} (${fmtKm(intervalsLength(front))} км)`
+                ? `${front.map((seg) => `${fmtReportPk(seg.s)}–${fmtReportPk(seg.e)}`).join("; ")} (${fmtKm(intervalsLength(front))} км)`
                 : '<span class="pdf-front-empty">нет доступного фронта</span>';
               const lowerName = state.layers[index + 1]?.name || "весь объект";
               return `<tr><td><b>${layer.name}</b></td><td>${lowerName}</td><td>${frontList}</td></tr>`;
@@ -2678,7 +2682,7 @@
                </table>`;
           el.innerHTML = `
       <h1>${frontReport ? "Отчёт по допустимым фронтам работ" : "Прогресс укладки слоёв"}</h1>
-      <div class="pdf-sub">Дата: ${reportDate()} · Протяжённость: ${fmtKm(length)} км (ПК ${fmt(start)} — ${fmt(total)} · ${metersLabel(length)})</div>
+      <div class="pdf-sub">Дата: ${reportDate()} · Протяжённость: ${fmtKm(length)} км (ПК ${fmtReportPk(start)} — ${fmtReportPk(total)} · ${metersLabel(length)})</div>
       <div class="pdf-overall">
         <div class="pdf-overall-main">
           <div class="pdf-overall-title">Общая выполненность объекта</div>
@@ -2718,11 +2722,11 @@
             if (isMajor) {
               const tooCloseToEnd = offset > 0 && total - offset < labelMinGap;
               if (!tooCloseToEnd)
-                html += `<div class="pdf-tick-label" style="left:${pct}%">${fmt(pk)}</div>`;
+                html += `<div class="pdf-tick-label" style="left:${pct}%">${fmtReportPk(pk)}</div>`;
             }
           }
           html += `<div class="pdf-tick" style="left:100%;height:10px"></div>`;
-          html += `<div class="pdf-tick-label end" style="left:100%">${fmt(BRIDGE_END)}</div></div>`;
+          html += `<div class="pdf-tick-label end" style="left:100%">${fmtReportPk(BRIDGE_END)}</div></div>`;
           return html;
         }
 

@@ -12,6 +12,11 @@ def _fmt(value: float) -> str:
     return f"{round(value, 2):.2f}".replace(".", ",")
 
 
+def _pk(value: float) -> str:
+    hundredths = max(0, round(float(value) * 100))
+    return f"{hundredths // 100}+{hundredths % 100:02d}"
+
+
 def _meters(pk: float) -> str:
     total = round(pk * 100)
     return f"{total // 1000} км {total % 1000:03d} м"
@@ -70,7 +75,7 @@ def build_word_document(data: dict) -> bytes:
     document.add_paragraph(f"Объект: {project_name}")
     document.add_paragraph(f"Дата формирования: {datetime.now():%d.%m.%Y %H:%M}")
     document.add_heading("1. Общие сведения", level=1)
-    _add_table(document, ["Показатель", "Значение"], [["Протяжённость трассы", f"ПК {_fmt(start)} — {_fmt(end)} ({_meters(length)})"], ["Количество слоёв", str(len(state.get("layers", [])))]] )
+    _add_table(document, ["Показатель", "Значение"], [["Протяжённость трассы", f"ПК {_pk(start)} — {_pk(end)} ({_meters(length)})"], ["Количество слоёв", str(len(state.get("layers", [])))]] )
 
     document.add_heading("2. План и факт", level=1)
     summary_rows = []
@@ -93,7 +98,7 @@ def build_word_document(data: dict) -> bytes:
         segments = sorted(layer.get("segments", []), key=lambda item: item["s"])
         rows = []
         for n, seg in enumerate(segments, 1):
-            rows.append([str(n), _fmt(seg["s"]), _fmt(seg["e"]), _meters(seg["e"]-seg["s"]), seg.get("status", "Выполнено"), seg.get("responsible", ""), seg.get("date", ""), seg.get("quality", ""), seg.get("note", "")])
+            rows.append([str(n), _pk(seg["s"]), _pk(seg["e"]), _meters(seg["e"]-seg["s"]), seg.get("status", "Выполнено"), seg.get("responsible", ""), seg.get("date", ""), seg.get("quality", ""), seg.get("note", "")])
         if rows:
             _add_table(document, ["№", "От, ПК", "До, ПК", "Длина", "Статус", "Ответственный", "Дата", "Качество", "Комментарий"], rows)
         else:
