@@ -312,7 +312,8 @@ def _export_excel(data):
         end = float(state["total"])
         route_length = max(0, end - start)
         excluded = min(route_length, max(0, float(layer.get("excludedPk", 0) or 0)))
-        layer_length = max(0, route_length - excluded)
+        layer_length = route_length
+        covered = max(0, covered - excluded)
         actual = round(covered / layer_length * 100, 1) if layer_length else 0
         plan = float(layer.get("planPercent", 0))
         summary.append([project_name, start, end, route_length, excluded, layer.get("name"), covered, plan, layer.get("planDate", ""), actual, actual - plan])

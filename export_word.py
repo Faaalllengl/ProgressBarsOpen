@@ -25,7 +25,8 @@ def _stats(layer: dict, start: float, end: float) -> tuple[float, float, float]:
     covered = _covered(layer)
     route_length = max(0.0, end - start)
     excluded = min(route_length, max(0.0, float(layer.get("excludedPk", 0) or 0)))
-    total = max(0.0, route_length - excluded)
+    total = route_length
+    covered = max(0.0, covered - excluded)
     remaining = max(0.0, total - covered)
     return covered, remaining, covered / total * 100 if total else 0.0
 

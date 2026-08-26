@@ -1677,8 +1677,8 @@
             routeLength,
             Math.max(0, Number(layer.excludedPk) || 0),
           );
-          const total = Math.max(0, routeLength - excluded);
-          const covered = layerCovered(layer);
+          const total = routeLength;
+          const covered = Math.max(0, layerCovered(layer) - excluded);
           const remaining = Math.max(0, total - covered);
           const pct = total > 0 ? (covered / total) * 100 : 0;
           return { covered, remaining, total, excluded, pct };
@@ -2234,8 +2234,8 @@
         <input type="date" value="${normalizeDateValue(layer.planDate || "")}" data-plan-date-layer="${layer.id}" title="Дата, к которой относится план">
       </div>
       <div class="seg-row">
-        Не учитывать в расчёте:
-        <input type="number" inputmode="decimal" min="0" step="0.01" value="${Number(layer.excludedPk) || 0}" data-excluded-layer="${layer.id}" title="Длина, которая не участвует в расчёте процента этого слоя">
+        Вычесть из выполненного:
+        <input type="number" inputmode="decimal" min="0" step="0.01" value="${Number(layer.excludedPk) || 0}" data-excluded-layer="${layer.id}" title="Длина, которая вычитается из выполненного и добавляется к остатку этого слоя">
         ПК
       </div>
       ${rows || '<div class="seg-row" style="color:var(--text-faint)">участков пока нет</div>'}
