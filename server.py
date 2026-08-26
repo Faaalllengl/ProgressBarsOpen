@@ -312,7 +312,7 @@ def _export_excel(data):
         end = float(state["total"])
         route_length = max(0, end - start)
         excluded = sum(
-            max(0, min(seg["e"], 277.92) - max(seg["s"], 275.78))
+            max(0, min(seg["e"], 278.00) - max(seg["s"], 275.70))
             for seg in layer.get("segments", [])
         )
         excluded = min(route_length, excluded)

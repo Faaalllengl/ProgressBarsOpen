@@ -1505,8 +1505,8 @@
       (function () {
         const DEFAULT_START = 0;
         const DEFAULT_TOTAL = 358.79;
-        const BRIDGE_START = 275.78;
-        const BRIDGE_END = 277.92;
+        const BRIDGE_START = 275.70;
+        const BRIDGE_END = 278.00;
         const BRIDGE_LEN_PK = BRIDGE_END - BRIDGE_START;
         const DEFAULT_LAYERS = [
           {
@@ -1687,7 +1687,7 @@
           const rawCovered = layerCovered(layer);
           const covered = Math.max(0, rawCovered - excluded);
           const remaining = Math.max(0, total - rawCovered);
-          const pct = total > 0 ? (covered / total) * 100 : 0;
+          const pct = total > 0 ? (remaining <= 0.001 ? 100 : (covered / total) * 100) : 0;
           return { covered, remaining, total, excluded, pct };
         }
         function displayLayerStats(layer, start, end) {
@@ -1705,7 +1705,7 @@
             { covered: 0, totalLength: 0, remaining: 0 },
           );
           const { covered, totalLength, remaining } = totals;
-          const pct = totalLength > 0 ? (covered / totalLength) * 100 : 0;
+          const pct = totalLength > 0 ? (remaining <= 0.001 ? 100 : (covered / totalLength) * 100) : 0;
           return { covered, remaining, totalLength, pct };
         }
         function progressLabel(stats) {
@@ -1858,7 +1858,7 @@
           state.layers.forEach((layer) => {
             if (!Number.isFinite(layer.excludedPk)) {
               layer.excludedPk =
-                safe.id === "project_main" && layer.id !== "shma" ? 2.14 : 0;
+                safe.id === "project_main" && layer.id !== "shma" ? 2.30 : 0;
             }
             layer.excludedPk = Math.max(0, layer.excludedPk);
           });
