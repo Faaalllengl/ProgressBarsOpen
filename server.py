@@ -311,7 +311,8 @@ def _export_excel(data):
         start = float(state.get("start", 0))
         end = float(state["total"])
         route_length = max(0, end - start)
-        excluded = sum(
+        is_shma = layer.get("id") == "shma" or layer.get("name") == "ЩМА"
+        excluded = 0 if is_shma else sum(
             max(0, min(seg["e"], 278.00) - max(seg["s"], 275.70))
             for seg in layer.get("segments", [])
         )

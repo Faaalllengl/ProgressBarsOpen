@@ -1686,7 +1686,8 @@
         }
         function layerStats(layer, start, end, excludeBridge = true) {
           const routeLength = Math.max(0, end - start);
-          const excluded = excludeBridge ? Math.min(routeLength, layerBridgeExcluded(layer)) : 0;
+          const isShma = layer.id === "shma" || layer.name === "ЩМА";
+          const excluded = excludeBridge && !isShma ? Math.min(routeLength, layerBridgeExcluded(layer)) : 0;
           const total = routeLength;
           const rawCovered = layerCovered(layer);
           const covered = Math.max(0, rawCovered - excluded);

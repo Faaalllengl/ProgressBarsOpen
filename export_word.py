@@ -29,7 +29,8 @@ def _covered(layer: dict) -> float:
 def _stats(layer: dict, start: float, end: float) -> tuple[float, float, float]:
     covered = _covered(layer)
     route_length = max(0.0, end - start)
-    excluded = min(
+    is_shma = layer.get("id") == "shma" or layer.get("name") == "ЩМА"
+    excluded = 0.0 if is_shma else min(
         route_length,
         sum(max(0.0, min(float(s["e"]), 278.00) - max(float(s["s"]), 275.70)) for s in layer.get("segments", [])),
     )
