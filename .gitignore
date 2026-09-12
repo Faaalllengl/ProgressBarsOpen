@@ -1,6 +1,12 @@
 road-progress-undo.json
 road-progress-data.json
 lotki-data.json
+road-barriers-data.json
+road-barriers-undo.json
+road-barriers-backups/
+road-shoulders-data.json
+road-shoulders-undo.json
+road-shoulders-backups/
 backups/
 .repowise/
 .claude/
