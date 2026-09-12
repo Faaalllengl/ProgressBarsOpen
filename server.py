@@ -20,6 +20,12 @@ DIR = Path(__file__).resolve().parent
 DATA_FILE = DIR / "road-progress-data.json"
 UNDO_FILE = DIR / "road-progress-undo.json"
 LOTKI_DATA_FILE = DIR / "lotki-data.json"
+BARriers_DATA_FILE = DIR / "road-barriers-data.json"
+BARriers_UNDO_FILE = DIR / "road-barriers-undo.json"
+BARriers_BACKUP_DIR = DIR / "road-barriers-backups"
+SHOULDERS_DATA_FILE = DIR / "road-shoulders-data.json"
+SHOULDERS_UNDO_FILE = DIR / "road-shoulders-undo.json"
+SHOULDERS_BACKUP_DIR = DIR / "road-shoulders-backups"
 BACKUP_DIR = DIR / "backups"
 PORT = 8765
 MAX_BACKUPS = 50
@@ -299,12 +305,36 @@ def _backup_current_data():
             pass
 
 
-def _export_excel(data):
+def _backup_barriers_current_data():
+    if not BARriers_DATA_FILE.is_file():
+        return
+    BARriers_BACKUP_DIR.mkdir(exist_ok=True)
+    stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")[:-3]
+    target = BARriers_BACKUP_DIR / f"road-barriers-{stamp}.json"
+    target.write_bytes(BARriers_DATA_FILE.read_bytes())
+    backups = sorted(BARriers_BACKUP_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    for old in backups[MAX_BACKUPS:]:
+        old.unlink(missing_ok=True)
+
+
+def _backup_shoulders_current_data():
+    if not SHOULDERS_DATA_FILE.is_file():
+        return
+    SHOULDERS_BACKUP_DIR.mkdir(exist_ok=True)
+    stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")[:-3]
+    target = SHOULDERS_BACKUP_DIR / f"road-shoulders-{stamp}.json"
+    target.write_bytes(SHOULDERS_DATA_FILE.read_bytes())
+    backups = sorted(SHOULDERS_BACKUP_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    for old in backups[MAX_BACKUPS:]:
+        old.unlink(missing_ok=True)
+
+
+def _export_excel(data, unit="ПК"):
     state = _project_state(data)
     workbook = Workbook()
     summary = workbook.active
     summary.title = "Сводка"
-    summary.append(["Объект", "ПК от", "ПК до", "Длина слоя, ПК", "Исключено, ПК", "Слой", "Готово, ПК", "План, %", "Дата плана", "Факт, %", "Отклонение, п.п."])
+    summary.append(["Объект", f"От, {unit}", f"До, {unit}", f"Длина слоя, {unit}", f"Исключено, {unit}", "Слой", f"Готово, {unit}", "План, %", "Дата плана", "Факт, %", "Отклонение, п.п."])
     project_name = next((p.get("name") for p in data.get("projects", []) if p.get("id") == data.get("activeProjectId")), "Основной объект")
     for layer in state.get("layers", []):
         covered = sum(max(0, s["e"] - s["s"]) for s in layer.get("segments", []))
@@ -323,7 +353,7 @@ def _export_excel(data):
         plan = float(layer.get("planPercent", 0))
         summary.append([project_name, start, end, route_length, excluded, layer.get("name"), covered, plan, layer.get("planDate", ""), actual, actual - plan])
     segments = workbook.create_sheet("Участки")
-    segments.append(["Слой", "От, ПК", "До, ПК", "Длина, ПК", "Статус", "Ответственный", "Дата", "Комментарий", "Качество"])
+    segments.append(["Слой", f"От, {unit}", f"До, {unit}", f"Длина, {unit}", "Статус", "Ответственный", "Дата", "Комментарий", "Качество"])
     for layer in state.get("layers", []):
         for seg in layer.get("segments", []):
             segments.append([layer.get("name"), seg["s"], seg["e"], seg["e"] - seg["s"], seg.get("status", "Выполнено"), seg.get("responsible", ""), seg.get("date", ""), seg.get("note", ""), seg.get("quality", "")])
@@ -337,23 +367,23 @@ def _export_excel(data):
     return output.getvalue()
 
 
-def _import_excel(raw):
+def _import_excel(raw, unit="ПК"):
     book = load_workbook(BytesIO(raw), data_only=True)
     sheet = book["Участки"] if "Участки" in book.sheetnames else book.active
     rows = list(sheet.iter_rows(values_only=True))
     if not rows:
         raise ValueError("Excel-файл пуст")
     headers = {str(value or "").strip().lower(): index for index, value in enumerate(rows[0])}
-    required = ["слой", "от, пк", "до, пк"]
+    required = ["слой", f"от, {unit.lower()}", f"до, {unit.lower()}"]
     if not all(key in headers for key in required):
-        raise ValueError("нужны колонки: Слой, От, ПК, До, ПК (лист «Участки»)")
+        raise ValueError(f"нужны колонки: Слой, От, {unit}, До, {unit} (лист «Участки»)")
     imported = []
     for row in rows[1:]:
         name = str(row[headers["слой"]] or "").strip()
         if not name:
             continue
         try:
-            seg = {"s": float(row[headers["от, пк"]]), "e": float(row[headers["до, пк"]])}
+            seg = {"s": float(row[headers[required[1]]]), "e": float(row[headers[required[2]]])}
         except (ValueError, TypeError):
             raise ValueError(f"некорректный участок слоя «{name}»")
         for field, header in (("status", "статус"), ("responsible", "ответственный"), ("date", "дата"), ("note", "комментарий"), ("quality", "качество")):
@@ -369,6 +399,24 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split("?", 1)[0]
+        if path == "/api/shoulders-data":
+            self._send_shoulders_data()
+            return
+        if path == "/api/shoulders/export/excel":
+            self._export_shoulders_excel()
+            return
+        if path == "/api/shoulders/backups":
+            self._shoulders_backups()
+            return
+        if path == "/api/barriers-data":
+            self._send_barriers_data()
+            return
+        if path == "/api/barriers/export/excel":
+            self._export_barriers_excel()
+            return
+        if path == "/api/barriers/backups":
+            self._barriers_backups()
+            return
         if path == "/api/lotki-data":
             self._send_lotki_data()
             return
@@ -395,6 +443,42 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = self.path.split("?", 1)[0]
+        if path == "/api/shoulders-data":
+            self._save_shoulders_data()
+            return
+        if path == "/api/shoulders/export/word":
+            self._export_shoulders_word()
+            return
+        if path == "/api/shoulders/import/excel":
+            self._import_shoulders_excel()
+            return
+        if path == "/api/shoulders/undo":
+            self._undo_shoulders()
+            return
+        if path == "/api/shoulders/backups/create":
+            self._create_shoulders_backup()
+            return
+        if path == "/api/shoulders/backups/restore":
+            self._restore_shoulders_backup()
+            return
+        if path == "/api/barriers-data":
+            self._save_barriers_data()
+            return
+        if path == "/api/barriers/export/word":
+            self._export_barriers_word()
+            return
+        if path == "/api/barriers/import/excel":
+            self._import_barriers_excel()
+            return
+        if path == "/api/barriers/undo":
+            self._undo_barriers()
+            return
+        if path == "/api/barriers/backups/create":
+            self._create_barriers_backup()
+            return
+        if path == "/api/barriers/backups/restore":
+            self._restore_barriers_backup()
+            return
         if path == "/api/lotki-data":
             self._save_lotki_data()
             return
@@ -516,6 +600,295 @@ class Handler(SimpleHTTPRequestHandler):
         body = b'{"ok":true}'
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _send_barriers_data(self):
+        body = BARriers_DATA_FILE.read_bytes() if BARriers_DATA_FILE.is_file() else b'{}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _send_shoulders_data(self):
+        body = SHOULDERS_DATA_FILE.read_bytes() if SHOULDERS_DATA_FILE.is_file() else b'{}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _save_shoulders_data(self):
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            data = json.loads(self.rfile.read(length).decode("utf-8"))
+            _validate_data(data)
+            if SHOULDERS_DATA_FILE.is_file():
+                current = json.loads(SHOULDERS_DATA_FILE.read_text(encoding="utf-8"))
+                if current != data:
+                    SHOULDERS_UNDO_FILE.write_bytes(SHOULDERS_DATA_FILE.read_bytes())
+            _backup_shoulders_current_data()
+            _write_json_file(SHOULDERS_DATA_FILE, data)
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        body = b'{"ok":true}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _export_shoulders_word(self):
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            data = json.loads(self.rfile.read(length).decode("utf-8"))
+            _validate_data(data)
+            body = build_word_document(data)
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        self.send_header("Content-Disposition", 'attachment; filename="obochiny.docx"')
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _export_shoulders_excel(self):
+        try:
+            data = json.loads(SHOULDERS_DATA_FILE.read_text(encoding="utf-8")) if SHOULDERS_DATA_FILE.is_file() else {}
+            _validate_data(data)
+            body = _export_excel(data)
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        self.send_header("Content-Disposition", 'attachment; filename="obochiny.xlsx"')
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _import_shoulders_excel(self):
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            imported = _import_excel(self.rfile.read(length))
+            data = json.loads(SHOULDERS_DATA_FILE.read_text(encoding="utf-8")) if SHOULDERS_DATA_FILE.is_file() else {}
+            state = _project_state(data)
+            layers = {layer["name"]: layer for layer in state.get("layers", [])}
+            for name, segment in imported:
+                if name not in layers:
+                    layers[name] = {"id": "import_" + str(len(layers)), "name": name, "color": "#6BC48C", "segments": []}
+                    state.setdefault("layers", []).append(layers[name])
+                layers[name]["segments"].append(segment)
+            _validate_data(data)
+            _backup_shoulders_current_data()
+            _write_json_file(SHOULDERS_DATA_FILE, data)
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _undo_shoulders(self):
+        try:
+            if not SHOULDERS_UNDO_FILE.is_file():
+                raise ValueError("нет сохранённого действия для отката")
+            data = json.loads(SHOULDERS_UNDO_FILE.read_text(encoding="utf-8"))
+            _validate_data(data)
+            _backup_shoulders_current_data()
+            _write_json_file(SHOULDERS_DATA_FILE, data)
+            SHOULDERS_UNDO_FILE.unlink(missing_ok=True)
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _shoulders_backups(self):
+        SHOULDERS_BACKUP_DIR.mkdir(exist_ok=True)
+        backups = [{"name": p.name, "size": p.stat().st_size, "modified": datetime.fromtimestamp(p.stat().st_mtime).isoformat()} for p in sorted(SHOULDERS_BACKUP_DIR.glob("*.json"), reverse=True)]
+        body = json.dumps(backups, ensure_ascii=False).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _create_shoulders_backup(self):
+        _backup_shoulders_current_data()
+        body = b'{"ok":true}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _restore_shoulders_backup(self):
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            request = json.loads(self.rfile.read(length).decode("utf-8"))
+            source = SHOULDERS_BACKUP_DIR / Path(request["name"]).name
+            if not source.is_file() or source.suffix != ".json":
+                raise ValueError("резервная копия не найдена")
+            data = json.loads(source.read_text(encoding="utf-8"))
+            _validate_data(data)
+            _backup_shoulders_current_data()
+            _write_json_file(SHOULDERS_DATA_FILE, data)
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _save_barriers_data(self):
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            data = json.loads(self.rfile.read(length).decode("utf-8"))
+            _validate_data(data)
+            if BARriers_DATA_FILE.is_file():
+                current = json.loads(BARriers_DATA_FILE.read_text(encoding="utf-8"))
+                if current != data:
+                    BARriers_UNDO_FILE.write_bytes(BARriers_DATA_FILE.read_bytes())
+            _backup_barriers_current_data()
+            _write_json_file(BARriers_DATA_FILE, data)
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        body = b'{"ok":true}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _export_barriers_word(self):
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            data = json.loads(self.rfile.read(length).decode("utf-8"))
+            _validate_data(data)
+            body = build_word_document(data, unit="км")
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        self.send_header("Content-Disposition", 'attachment; filename="dorozhnye-ograzhdeniya.docx"')
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _export_barriers_excel(self):
+        try:
+            data = json.loads(BARriers_DATA_FILE.read_text(encoding="utf-8")) if BARriers_DATA_FILE.is_file() else {}
+            _validate_data(data)
+            body = _export_excel(data, unit="км")
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        self.send_header("Content-Disposition", 'attachment; filename="dorozhnye-ograzhdeniya.xlsx"')
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _import_barriers_excel(self):
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            imported = _import_excel(self.rfile.read(length), unit="км")
+            data = json.loads(BARriers_DATA_FILE.read_text(encoding="utf-8")) if BARriers_DATA_FILE.is_file() else {}
+            state = _project_state(data)
+            layers = {layer["name"]: layer for layer in state.get("layers", [])}
+            for name, segment in imported:
+                if name not in layers:
+                    layers[name] = {"id": "import_" + str(len(layers)), "name": name, "color": "#6BC48C", "segments": []}
+                    state.setdefault("layers", []).append(layers[name])
+                layers[name]["segments"].append(segment)
+            _validate_data(data)
+            _backup_barriers_current_data()
+            _write_json_file(BARriers_DATA_FILE, data)
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _undo_barriers(self):
+        try:
+            if not BARriers_UNDO_FILE.is_file():
+                raise ValueError("нет сохранённого действия для отката")
+            data = json.loads(BARriers_UNDO_FILE.read_text(encoding="utf-8"))
+            _validate_data(data)
+            _write_json_file(BARriers_DATA_FILE, data)
+            BARriers_UNDO_FILE.unlink(missing_ok=True)
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _barriers_backups(self):
+        BARriers_BACKUP_DIR.mkdir(exist_ok=True)
+        backups = [{"name": p.name, "size": p.stat().st_size, "modified": datetime.fromtimestamp(p.stat().st_mtime).isoformat()} for p in sorted(BARriers_BACKUP_DIR.glob("*.json"), reverse=True)]
+        body = json.dumps(backups, ensure_ascii=False).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _create_barriers_backup(self):
+        _backup_barriers_current_data()
+        body = b'{"ok":true}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _restore_barriers_backup(self):
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            request = json.loads(self.rfile.read(length).decode("utf-8"))
+            source = BARriers_BACKUP_DIR / Path(request["name"]).name
+            if not source.is_file() or source.suffix != ".json":
+                raise ValueError("резервная копия не найдена")
+            data = json.loads(source.read_text(encoding="utf-8"))
+            _validate_data(data)
+            _backup_barriers_current_data()
+            _write_json_file(BARriers_DATA_FILE, data)
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        except Exception as exc:
+            self.send_error(400, str(exc))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Прогресс укладки слоёв</title>
+    <title>Дорожные ограждения</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%2315171a'/%3E%3Crect x='4' y='14' width='24' height='4' fill='%23D71921'/%3E%3Crect x='4' y='14' width='14' height='4' fill='%236BC48C'/%3E%3C/svg%3E"
@@ -1417,6 +1417,7 @@
         color: var(--color-report-ink);
         border-bottom: 2px solid var(--pdf-accent);
       }
+      #bridgeSection { display: none !important; }
       .module-tabs { display:flex; flex-wrap:wrap; gap:8px; }
       .module-tabs .active { border-color:var(--accent); color:var(--accent); }
       .module-tabs .report-btn { background:#b3131b; border-color:#b3131b; color:#fff; }
@@ -1427,25 +1428,25 @@
       <div class="wrap">
         <div class="hdr">
           <div>
-            <div class="eyebrow">Дорожная одежда · Пикетаж</div>
-            <h1>Прогресс укладки слоёв</h1>
+            <div class="eyebrow">Безопасность дороги · Километраж</div>
+            <h1>Дорожные ограждения</h1>
           </div>
           <div class="meta">
             <div>Общая протяжённость: <b id="totalDisplay">—</b></div>
             <div class="len-edit">
-              <span>ПК от</span>
+              <span>км от</span>
               <input type="number" id="startInput" step="0.01" min="0" />
               <span>до</span>
               <input type="number" id="totalInput" step="0.01" min="0.01" />
-              <span>(1 ПК = 100 м)</span>
+            <span>(1 км = 1000 м)</span>
             </div>
           </div>
         </div>
 
         <div class="control-panel">
-          <div class="module-tabs"><a class="small-btn active" aria-current="page" href="road-progress.html">Прогресс укладки слоёв</a> <a class="small-btn" href="road-shoulders.html">Обочины</a> <a class="small-btn" href="road-barriers.html">Дорожные ограждения</a> <a class="small-btn" href="lotki.html">Лотки</a> <a class="small-btn report-btn" href="project-report.html">Общий отчёт PDF</a></div>
+          <div class="module-tabs"><a class="small-btn" href="road-progress.html">Прогресс укладки слоёв</a> <a class="small-btn" href="road-shoulders.html">Обочины</a> <a class="small-btn active" aria-current="page" href="road-barriers.html">Дорожные ограждения</a> <a class="small-btn" href="lotki.html">Лотки</a> <a class="small-btn report-btn" href="project-report.html">Общий отчёт PDF</a></div>
           <div><label>Объект <select id="projectSelect"></select></label> <button class="small-btn" id="addProjectBtn">+ объект</button> <button class="small-btn" id="renameProjectBtn">переименовать</button> <button class="small-btn del-btn" id="deleteProjectBtn">удалить</button></div>
-          <div><label>Фильтр <select id="layerFilter"><option value="all">все слои</option><option value="incomplete">незавершённые</option><option value="behind">отстающие от плана</option></select></label> <label>Найти ПК <input id="pkSearch" type="number" step="0.01" placeholder="например 275,8"></label> <button class="small-btn" id="pkSearchBtn">найти</button></div>
+          <div><label>Фильтр <select id="layerFilter"><option value="all">все слои</option><option value="incomplete">незавершённые</option><option value="behind">отстающие от плана</option></select></label> <label>Найти км <input id="pkSearch" type="number" step="0.01" placeholder="например 275,8"></label> <button class="small-btn" id="pkSearchBtn">найти</button></div>
         </div>
 
         <div class="ruler-block">
@@ -1485,7 +1486,7 @@
           </div>
           <span class="status" id="statusMsg">загрузка…</span>
         </div>
-        <div class="hint-line">Подсказка: Enter в полях ПК и названия слоя добавляет быстрее; Ctrl+S сохраняет изменения вручную; клик по слою открывает его редактор.</div>
+        <div class="hint-line">Подсказка: Enter в полях километров и названия слоя добавляет быстрее; Ctrl+S сохраняет изменения вручную; клик по слою открывает его редактор.</div>
       </div>
     </div>
 
@@ -1507,90 +1508,18 @@
     <script>
       (function () {
         const DEFAULT_START = 0;
-        const DEFAULT_TOTAL = 358.79;
-        const BRIDGE_START = 275.70;
-        const BRIDGE_END = 278.00;
-        const BRIDGE_LEN_PK = BRIDGE_END - BRIDGE_START;
+        const DEFAULT_TOTAL = 1;
+        const BRIDGE_START = 0;
+        const BRIDGE_END = 0;
+        const BRIDGE_LEN_PK = 0;
         const DEFAULT_LAYERS = [
-          {
-            id: "shma",
-            name: "ЩМА",
-            color: "#D71921",
-            segments: [
-              { s: 194.5, e: 270.8 },
-              { s: 278, e: 319.7 },
-            ],
-          },
-          {
-            id: "kz",
-            name: "К/З",
-            color: "#E8934A",
-            segments: [
-              { s: 194.4, e: 273.8 },
-              { s: 278, e: 320.5 },
-              { s: 332.4, e: 358.79 },
-            ],
-          },
-          {
-            id: "oms",
-            name: "ОМС",
-            color: "#4A9EDB",
-            segments: [
-              { s: 0, e: 36 },
-              { s: 180.3, e: 275 },
-              { s: 278, e: 322 },
-              { s: 332.2, e: 358.79 },
-            ],
-          },
-          {
-            id: "rasklin",
-            name: "Расклин.",
-            color: "#6BC48C",
-            segments: [
-              { s: 0, e: 36 },
-              { s: 170, e: 275.7 },
-              { s: 278, e: 322 },
-              { s: 328, e: 358.79 },
-            ],
-          },
-          {
-            id: "nso",
-            name: "НСО 40-70",
-            color: "#B98CDB",
-            segments: [
-              { s: 0, e: 50 },
-              { s: 167, e: 275.7 },
-              { s: 278, e: 322 },
-              { s: 324, e: 358.79 },
-            ],
-          },
-          {
-            id: "dso",
-            name: "ДСО",
-            color: "#D9C548",
-            segments: [
-              { s: 0, e: 50 },
-              { s: 167, e: 275.7 },
-              { s: 278, e: 322 },
-              { s: 324, e: 358.79 },
-            ],
-          },
-          {
-            id: "zmp",
-            name: "ЗМП",
-            color: "#7A828C",
-            segments: [
-              { s: 0, e: 50 },
-              { s: 162, e: 275.7 },
-              { s: 278, e: 322 },
-              { s: 324, e: 358.79 },
-            ],
-          },
+          { id: "barrier", name: "Дорожное ограждение", color: "#D71921", segments: [] },
+          { id: "signal", name: "Сигнальные устройства", color: "#E8934A", segments: [] },
         ];
 
-        const STORAGE_KEY = "road-progress-state";
-        const UPDATE_STORAGE_KEY = "progressbars-last-seen-version";
-        const DATA_FILE_NAME = "road-progress-data.json";
+        const STORAGE_KEY = "road-barriers-state";
+        const UPDATE_STORAGE_KEY = "road-barriers-last-seen-version";
+        const DATA_FILE_NAME = "road-barriers-data.json";
         let state = null;
         let workspace = null;
         let openEditorId = null;
@@ -1606,27 +1535,19 @@
         const statusEl = $("#statusMsg");
 
         function fmt(n) {
-          return (Math.round(n * 100) / 100).toString().replace(".", ",");
+          return (Math.round(n * 1000) / 1000).toString().replace(".", ",");
         }
-        function fmtReportPk(value) {
-          const hundredths = Math.max(0, Math.round(Number(value) * 100));
-          return Math.floor(hundredths / 100) + "+" + String(hundredths % 100).padStart(2, "0");
-        }
+        function fmtReportPk(value) { return fmt(value); }
         function pkToMeters(pk) {
-          return Math.round(pk * 100);
+          return Math.round(pk * 1000);
         }
         function pkToKm(pk) {
-          return pk * 0.1;
+          return pk;
         }
         function fmtKm(pk) {
           return fmt(pkToKm(pk));
         }
-        function metersLabel(pk) {
-          const m = pkToMeters(pk);
-          const km = Math.floor(m / 1000);
-          const rem = m % 1000;
-          return km + " км " + String(rem).padStart(3, "0") + " м";
-        }
+        function metersLabel(pk) { return fmt(pk) + " км"; }
         function layerCovered(layer) {
           return layer.segments.reduce(
             (sum, seg) => sum + Math.max(0, seg.e - seg.s),
@@ -1684,7 +1605,7 @@
         function frontLabel(intervals) {
           const length = intervalsLength(intervals);
           return length > 0
-            ? `<b>фронт: ${fmtKm(length)} км</b><br>${intervalsLabel(intervals)} ПК`
+            ? `<b>фронт: ${fmtKm(length)} км</b><br>${intervalsLabel(intervals)} км`
             : "фронт: нет доступных участков";
         }
         function layerStats(layer, start, end, excludeBridge = true) {
@@ -1763,10 +1684,10 @@
           return "";
         }
         function formatPk(value) {
-          return Number(value).toFixed(2);
+          return Number(value).toFixed(3);
         }
         function segmentLabel(segment) {
-          return segment ? `ПК ${formatPk(segment.s)}–${formatPk(segment.e)}` : "—";
+          return segment ? `км ${formatPk(segment.s)}–${formatPk(segment.e)}` : "—";
         }
         function commitLayer(layer, before, action, change = {}) {
           const error = hasInvalidSegments(layer, state.start, state.total);
@@ -1932,14 +1853,14 @@
 
         const storage = {
           async loadFromFile() {
-            const res = await fetch("/api/data", { cache: "no-store" });
+            const res = await fetch("/api/barriers-data", { cache: "no-store" });
             if (!res.ok) throw new Error("file load failed");
             const data = await res.json();
             if (!isValidState(data)) throw new Error("invalid file data");
             return data;
           },
           async saveToFile(data) {
-            const res = await fetch("/api/data", {
+            const res = await fetch("/api/barriers-data", {
               method: "POST",
               headers: { "Content-Type": "application/json; charset=utf-8" },
               body: JSON.stringify(data),
@@ -2089,7 +2010,7 @@
           while (Date.now() - startedAt < 45000) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
             try {
-              const response = await fetch("/api/data", { cache: "no-store" });
+              const response = await fetch("/api/barriers-data", { cache: "no-store" });
               if (serverStopped && response.ok) {
                 window.location.reload();
                 return;
@@ -2183,7 +2104,7 @@
               .map((seg) => {
                 const left = length > 0 ? Math.max(0, Math.min(100, ((seg.s - start) / length) * 100)) : 0;
                 const width = Math.max(0.15, Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0));
-                return `<div class="front-seg" title="Допустимый фронт: ${fmt(seg.s)} — ${fmt(seg.e)} ПК" style="left:${left}%;width:${width}%"></div>`;
+                return `<div class="front-seg" title="Допустимый фронт: ${fmt(seg.s)} — ${fmt(seg.e)} км" style="left:${left}%;width:${width}%"></div>`;
               })
               .join("")}
             ${layer.segments
@@ -2193,7 +2114,7 @@
                   0.15,
                   Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0),
                 );
-                return `<div class="seg" title="${fmt(seg.s)} — ${fmt(seg.e)} ПК (${fmtKm(seg.e - seg.s)} км)"
+                return `<div class="seg" title="${fmt(seg.s)} — ${fmt(seg.e)} км (${fmtKm(seg.e - seg.s)} км)"
                 style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
               })
               .join("")}
@@ -2232,7 +2153,7 @@
           <input type="number" inputmode="decimal" step="0.01" value="${seg.s}" data-layer="${layer.id}" data-idx="${idx}" data-field="s" title="Начало участка">
           <span class="arrow">→</span>
           <input type="number" inputmode="decimal" step="0.01" value="${seg.e}" data-layer="${layer.id}" data-idx="${idx}" data-field="e" title="Конец участка">
-          <span class="len">${fmt(seg.e - seg.s)} ПК · ${metersLabel(seg.e - seg.s)}</span>
+          <span class="len">${fmt(seg.e - seg.s)} км · ${metersLabel(seg.e - seg.s)}</span>
           <button class="del-btn" data-del-layer="${layer.id}" data-del-idx="${idx}" title="Удалить этот участок">✕</button>
         </div>
       `,
@@ -2255,7 +2176,7 @@
         <input type="date" value="${normalizeDateValue(layer.planDate || "")}" data-plan-date-layer="${layer.id}" title="Дата, к которой относится план">
       </div>
       <div class="seg-row">
-        Корректировка моста учитывается автоматически по пересечению с ПК ${fmt(BRIDGE_START)}–${fmt(BRIDGE_END)}:
+        Корректировка моста учитывается автоматически по пересечению с км ${fmt(BRIDGE_START)}–${fmt(BRIDGE_END)}:
       </div>
       ${rows || '<div class="seg-row" style="color:var(--text-faint)">участков пока нет</div>'}
       <div class="add-row">
@@ -2322,7 +2243,7 @@
             const before = layer.excludedPk || 0;
             const value = parseFloat(inp.value);
             layer.excludedPk = Number.isFinite(value) ? Math.max(0, Math.min(routeLength, value)) : 0;
-            journal("Изменено исключение из расчёта", `Слой: ${layer.name}, было: ${before} ПК, стало: ${layer.excludedPk} ПК`, { layer: layer.name, before: { excludedPk: before }, after: { excludedPk: layer.excludedPk } });
+            journal("Изменено исключение из расчёта", `Слой: ${layer.name}, было: ${before} км, стало: ${layer.excludedPk} км`, { layer: layer.name, before: { excludedPk: before }, after: { excludedPk: layer.excludedPk } });
             renderLayers();
             scheduleSave();
           }));
@@ -2405,7 +2326,7 @@
 
           $("#summaryTotal").innerHTML =
             `<div class="summary-hdr">Сводка по слоям</div>
-       <div class="summary-meta">Общая протяжённость: <b>${fmtKm(length)} км</b> (ПК ${fmt(start)} — ${fmt(total)} · ${metersLabel(length)})</div>
+       <div class="summary-meta">Общая протяжённость: <b>${fmtKm(length)} км</b> (км ${fmt(start)} — ${fmt(total)} · ${metersLabel(length)})</div>
        <div class="summary-overall">Общая выполненность объекта: <b>${objectPct.toFixed(1)}%</b><span class="summary-help" tabindex="0" role="img" aria-label="Как считается общая выполненность" data-tooltip="Скорректированная уложенная длина слоёв ÷ суммарную длину слоёв × 100%. Из уложенных отрезков автоматически исключается пересечение с мостом.">?</span></div>
        <div class="summary-meta">Средний план по слоям: <b>${planAvg.toFixed(1)}%</b></div>
        <div class="summary-grid">${rows}</div>`;
@@ -2449,7 +2370,7 @@
           <input type="number" inputmode="decimal" step="0.01" value="${seg.s}" data-bridge-layer="${layer.id}" data-idx="${idx}" data-field="s" title="Начало участка">
           <span class="arrow">→</span>
           <input type="number" inputmode="decimal" step="0.01" value="${seg.e}" data-bridge-layer="${layer.id}" data-idx="${idx}" data-field="e" title="Конец участка">
-          <span class="len">${fmt(seg.e - seg.s)} ПК · ${metersLabel(seg.e - seg.s)}</span>
+          <span class="len">${fmt(seg.e - seg.s)} км · ${metersLabel(seg.e - seg.s)}</span>
           <button class="del-btn" data-bridge-del-layer="${layer.id}" data-del-idx="${idx}" title="Удалить этот участок">✕</button>
         </div>
       `,
@@ -2550,7 +2471,7 @@
                       ((relE - relS) / bridgeTotal) * 100,
                     ),
                   );
-                  return `<div class="seg" title="${fmt(seg.s)} — ${fmt(seg.e)} ПК (${fmtKm(seg.e - seg.s)} км)"
+                  return `<div class="seg" title="${fmt(seg.s)} — ${fmt(seg.e)} км (${fmtKm(seg.e - seg.s)} км)"
                 style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
                 })
                 .join("")}
@@ -2575,16 +2496,16 @@
           <div class="eyebrow">Мост · Пикетаж</div>
           <h2>Участок моста</h2>
           <div class="meta">
-            Начало моста: <b>ПК ${fmt(BRIDGE_START)}</b> ·
-            Конец моста: <b>ПК ${fmt(BRIDGE_END)}</b> ·
-            Длина: <b>${metersLabel(BRIDGE_LEN_PK)}</b> (${fmt(BRIDGE_LEN_PK)} ПК)
+            Начало моста: <b>км ${fmt(BRIDGE_START)}</b> ·
+            Конец моста: <b>км ${fmt(BRIDGE_END)}</b> ·
+            Длина: <b>${metersLabel(BRIDGE_LEN_PK)}</b> (${fmt(BRIDGE_LEN_PK)} км)
           </div>
         </div>
         <div class="ruler-block">${renderBridgeRulerHtml()}</div>
         <div id="${layersContainerId}">${layersHtml}</div>
         <div class="summary-total" style="margin-top:22px">
           <div class="summary-hdr">Сводка по слоям (мост)</div>
-          <div class="summary-meta">Протяжённость участка: <b>${fmtKm(BRIDGE_LEN_PK)} км</b> (ПК ${fmt(BRIDGE_START)} — ${fmt(BRIDGE_END)} · ${metersLabel(BRIDGE_LEN_PK)})</div>
+          <div class="summary-meta">Протяжённость участка: <b>${fmtKm(BRIDGE_LEN_PK)} км</b> (км ${fmt(BRIDGE_START)} — ${fmt(BRIDGE_END)} · ${metersLabel(BRIDGE_LEN_PK)})</div>
           <div class="summary-grid">${summaryRows}</div>
         </div>`;
 
@@ -2645,7 +2566,7 @@
               .map((seg) => {
                 const left = length > 0 ? Math.max(0, Math.min(100, ((seg.s - start) / length) * 100)) : 0;
                 const width = Math.max(0.15, Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0));
-                return `<div class="pdf-front-seg" title="Допустимый фронт: ${fmtReportPk(seg.s)} — ${fmtReportPk(seg.e)} ПК" style="left:${left}%;width:${width}%"></div>`;
+                return `<div class="pdf-front-seg" title="Допустимый фронт: ${fmtReportPk(seg.s)} — ${fmtReportPk(seg.e)} км" style="left:${left}%;width:${width}%"></div>`;
               })
                .join("") : "";
             const segs = layer.segments
@@ -2705,12 +2626,12 @@
                  ${frontTableRows}
                </table>`
             : `<table>
-                 <tr><th>Слой</th><th>%</th><th>Выполнено</th><th>Осталось</th><th>Уложенные участки (ПК)</th></tr>
+                 <tr><th>Слой</th><th>%</th><th>Выполнено</th><th>Осталось</th><th>Уложенные участки (км)</th></tr>
                  ${tableRows}
                </table>`;
           el.innerHTML = `
-      <h1>${frontReport ? "Отчёт по допустимым фронтам работ" : "Прогресс укладки слоёв"}</h1>
-      <div class="pdf-sub">Дата: ${reportDate()} · Протяжённость: ${fmtKm(length)} км (ПК ${fmtReportPk(start)} — ${fmtReportPk(total)} · ${metersLabel(length)})</div>
+      <h1>${frontReport ? "Отчёт по допустимым фронтам работ" : "Дорожные ограждения"}</h1>
+      <div class="pdf-sub">Дата: ${reportDate()} · Протяжённость: ${fmtKm(length)} км (км ${fmtReportPk(start)} — ${fmtReportPk(total)} · ${metersLabel(length)})</div>
       <div class="pdf-overall">
         <div class="pdf-overall-main">
           <div class="pdf-overall-title">Общая выполненность объекта</div>
@@ -2730,7 +2651,7 @@
       <div class="pdf-legend"><span class="pdf-legend-item"><span class="pdf-legend-swatch front"></span> допустимый фронт</span><span class="pdf-legend-item"><span class="pdf-legend-swatch" style="background:#777"></span> уложенный участок</span></div>` : ""}
       <div class="pdf-chart">${chartHtml}</div>
       ${reportTable}
-      <div class="pdf-foot">1 пикет (ПК) = 100 м. Отчёт для печати.</div>`;
+      <div class="pdf-foot">1 км = 1000 м. Отчёт для печати.</div>`;
           return el;
         }
 
@@ -2806,7 +2727,7 @@
               heightLeft -= pageHeight - margin * 2;
             }
 
-            const filePrefix = mode === "front" ? "otchet-fronty" : "otchet-progress";
+            const filePrefix = mode === "front" ? "otchet-fronty" : "dorozhnye-ograzhdeniya";
             pdf.save(filePrefix + "-" + fileStamp() + ".pdf");
             setStatus(mode === "front" ? "отчёт по фронтам сохранён" : "сводка PDF сохранена", true);
           } catch (err) {
@@ -2824,7 +2745,7 @@
           btn.disabled = true;
           setStatus("формирование Word…");
           try {
-            const res = await fetch("/api/export/word", {
+            const res = await fetch("/api/barriers/export/word", {
               method: "POST",
               headers: { "Content-Type": "application/json; charset=utf-8" },
               body: JSON.stringify(workspace),
@@ -2834,7 +2755,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
-            link.download = "otchet-progress-" + fileStamp() + ".docx";
+            link.download = "otchet-dorozhnye-ograzhdeniya-" + fileStamp() + ".docx";
             link.click();
             URL.revokeObjectURL(url);
             setStatus("Word сохранён", true);
@@ -2857,7 +2778,7 @@
           $("#totalInput").value = state.total;
           const length = Math.max(0, state.total - state.start);
           $("#totalDisplay").textContent =
-            "ПК " + fmt(state.start) + " — " + fmt(state.total) + " (" + metersLabel(length) + ")";
+            "км " + fmt(state.start) + " — " + fmt(state.total) + " (" + metersLabel(length) + ")";
           renderRuler();
           renderLayers();
         }
@@ -2865,19 +2786,19 @@
         async function exportExcel() {
           try {
             await save();
-            const res = await fetch("/api/export/excel");
+            const res = await fetch("/api/barriers/export/excel");
             if (!res.ok) throw new Error();
             const url = URL.createObjectURL(await res.blob());
-            const link = document.createElement("a"); link.href = url; link.download = "progress-" + fileStamp() + ".xlsx"; link.click(); URL.revokeObjectURL(url);
+            const link = document.createElement("a"); link.href = url; link.download = "dorozhnye-ograzhdeniya-" + fileStamp() + ".xlsx"; link.click(); URL.revokeObjectURL(url);
             setStatus("Excel сохранён", true);
           } catch (e) { setStatus("ошибка Excel — запустите файл запуска"); }
         }
         async function importExcel(file) {
           try {
-            const res = await fetch("/api/import/excel", { method:"POST", headers:{"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, body:file });
+            const res = await fetch("/api/barriers/import/excel", { method:"POST", headers:{"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, body:file });
             if (!res.ok) throw new Error(await res.text());
             workspace = normalizeWorkspace(await res.json()); selectActiveProject(); journal("Импорт Excel", file.name); render(); scheduleSave(); setStatus("Excel импортирован", true);
-          } catch (e) { alert("Не удалось импортировать файл. Используйте лист «Участки» с колонками «Слой», «От, ПК», «До, ПК»."); }
+          } catch (e) { alert("Не удалось импортировать файл. Используйте лист «Участки» с колонками «Слой», «От, км», «До, км»."); }
         }
         async function exportData() {
           try {
@@ -2914,7 +2835,7 @@
             if (!isValidState(incoming)) throw new Error("неверная структура файла");
             if (!confirm("Импорт заменит текущие данные. Перед этим будет создана резервная копия. Продолжить?")) return;
             await save();
-            try { await fetch("/api/backups/create", { method: "POST" }); } catch (e) { /* browser-only mode */ }
+            try { await fetch("/api/barriers/backups/create", { method: "POST" }); } catch (e) { /* browser-only mode */ }
             workspace = normalizeWorkspace(incoming);
             selectActiveProject();
             journal("Импорт данных", `Файл: ${file.name}`, { sourceFile: file.name, import: true });
@@ -2926,11 +2847,11 @@
             alert("Не удалось импортировать данные: " + (e.message || "неверный JSON-файл"));
           }
         }
-        async function createBackup() { try { await save(); const res = await fetch("/api/backups/create", {method:"POST"}); if (!res.ok) throw new Error(); setStatus("резервная копия создана", true); } catch(e) { setStatus("бэкап доступен через файл запуска"); } }
+        async function createBackup() { try { await save(); const res = await fetch("/api/barriers/backups/create", {method:"POST"}); if (!res.ok) throw new Error(); setStatus("резервная копия создана", true); } catch(e) { setStatus("бэкап доступен через файл запуска"); } }
         async function undoLastChange() {
           if (!confirm("Отменить последнее сохранённое изменение? Текущее состояние будет сохранено в резервных копиях.")) return;
           try {
-            const res = await fetch("/api/undo", { method: "POST" });
+            const res = await fetch("/api/barriers/undo", { method: "POST" });
             if (!res.ok) throw new Error(await res.text());
             workspace = normalizeWorkspace(await res.json());
             selectActiveProject();
@@ -2943,7 +2864,7 @@
           }
         }
         async function restoreBackup() {
-          try { const backups = await (await fetch("/api/backups")).json(); if (!backups.length) return alert("Резервных копий пока нет."); const text = backups.slice(0, 10).map((b,i) => `${i+1}. ${b.name}`).join("\n"); const n = parseInt(prompt("Введите номер копии для восстановления:\n" + text), 10); if (!n || !backups[n-1]) return; const res = await fetch("/api/backups/restore", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name:backups[n-1].name})}); if (!res.ok) throw new Error(); workspace = normalizeWorkspace(await res.json()); selectActiveProject(); render(); setStatus("копия восстановлена", true); } catch(e) { alert("Не удалось восстановить копию."); }
+          try { const backups = await (await fetch("/api/barriers/backups")).json(); if (!backups.length) return alert("Резервных копий пока нет."); const text = backups.slice(0, 10).map((b,i) => `${i+1}. ${b.name}`).join("\n"); const n = parseInt(prompt("Введите номер копии для восстановления:\n" + text), 10); if (!n || !backups[n-1]) return; const res = await fetch("/api/barriers/backups/restore", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name:backups[n-1].name})}); if (!res.ok) throw new Error(); workspace = normalizeWorkspace(await res.json()); selectActiveProject(); render(); setStatus("копия восстановлена", true); } catch(e) { alert("Не удалось восстановить копию."); }
         }
 
 
@@ -3032,7 +2953,7 @@
         });
         $("#updatesUpdateBtn").addEventListener("click", applyUpdate);
         $("#checkUpdatesBtn").addEventListener("click", manualCheckForUpdates);
-        $("#pkSearchBtn").addEventListener("click", () => { const pk = parseFloat($("#pkSearch").value); if (!Number.isFinite(pk)) return; let found = null; state.layers.forEach((layer) => layer.segments.forEach((seg) => { if (pk >= seg.s && pk <= seg.e) found = layer.id; })); if (!found) return alert("На этом ПК нет выполненного участка."); openEditorId = found; renderLayers(); const row = layersEl.querySelector(`.editor[data-layer-id="${found}"]`); if (row) row.scrollIntoView({behavior:"smooth", block:"center"}); });
+        $("#pkSearchBtn").addEventListener("click", () => { const pk = parseFloat($("#pkSearch").value); if (!Number.isFinite(pk)) return; let found = null; state.layers.forEach((layer) => layer.segments.forEach((seg) => { if (pk >= seg.s && pk <= seg.e) found = layer.id; })); if (!found) return alert("На этом км нет выполненного участка."); openEditorId = found; renderLayers(); const row = layersEl.querySelector(`.editor[data-layer-id="${found}"]`); if (row) row.scrollIntoView({behavior:"smooth", block:"center"}); });
         $("#newLayerName").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#addLayerBtn").click(); } });
         $("#pkSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#pkSearchBtn").click(); } });
         $("#startInput").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });

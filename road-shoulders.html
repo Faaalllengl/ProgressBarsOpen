@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Прогресс укладки слоёв</title>
+    <title>Обочины</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%2315171a'/%3E%3Crect x='4' y='14' width='24' height='4' fill='%23D71921'/%3E%3Crect x='4' y='14' width='14' height='4' fill='%236BC48C'/%3E%3C/svg%3E"
@@ -1420,6 +1420,10 @@
       .module-tabs { display:flex; flex-wrap:wrap; gap:8px; }
       .module-tabs .active { border-color:var(--accent); color:var(--accent); }
       .module-tabs .report-btn { background:#b3131b; border-color:#b3131b; color:#fff; }
+      .shoulder-seg { display:flex; overflow:hidden; background:transparent !important; }
+      .shoulder-half { width:50%; height:100%; background:repeating-linear-gradient(135deg, rgba(255,255,255,.35) 0 4px, rgba(255,255,255,.08) 4px 8px), #68717c; }
+      .shoulder-half.done { background:var(--segment-color); }
+      .side-toggle { display:inline-flex; align-items:center; gap:4px; margin-left:8px; font-size:12px; white-space:nowrap; }
     </style>
   </head>
   <body>
@@ -1427,8 +1431,8 @@
       <div class="wrap">
         <div class="hdr">
           <div>
-            <div class="eyebrow">Дорожная одежда · Пикетаж</div>
-            <h1>Прогресс укладки слоёв</h1>
+            <div class="eyebrow">Обустройство дороги · Пикетаж</div>
+            <h1>Обочины</h1>
           </div>
           <div class="meta">
             <div>Общая протяжённость: <b id="totalDisplay">—</b></div>
@@ -1443,7 +1447,7 @@
         </div>
 
         <div class="control-panel">
-          <div class="module-tabs"><a class="small-btn active" aria-current="page" href="road-progress.html">Прогресс укладки слоёв</a> <a class="small-btn" href="road-shoulders.html">Обочины</a> <a class="small-btn" href="road-barriers.html">Дорожные ограждения</a> <a class="small-btn" href="lotki.html">Лотки</a> <a class="small-btn report-btn" href="project-report.html">Общий отчёт PDF</a></div>
+          <div class="module-tabs"><a class="small-btn" href="road-progress.html">Прогресс укладки слоёв</a> <a class="small-btn active" aria-current="page" href="road-shoulders.html">Обочины</a> <a class="small-btn" href="road-barriers.html">Дорожные ограждения</a> <a class="small-btn" href="lotki.html">Лотки</a> <a class="small-btn report-btn" href="project-report.html">Общий отчёт PDF</a></div>
           <div><label>Объект <select id="projectSelect"></select></label> <button class="small-btn" id="addProjectBtn">+ объект</button> <button class="small-btn" id="renameProjectBtn">переименовать</button> <button class="small-btn del-btn" id="deleteProjectBtn">удалить</button></div>
           <div><label>Фильтр <select id="layerFilter"><option value="all">все слои</option><option value="incomplete">незавершённые</option><option value="behind">отстающие от плана</option></select></label> <label>Найти ПК <input id="pkSearch" type="number" step="0.01" placeholder="например 275,8"></label> <button class="small-btn" id="pkSearchBtn">найти</button></div>
         </div>
@@ -1512,85 +1516,13 @@
         const BRIDGE_END = 278.00;
         const BRIDGE_LEN_PK = BRIDGE_END - BRIDGE_START;
         const DEFAULT_LAYERS = [
-          {
-            id: "shma",
-            name: "ЩМА",
-            color: "#D71921",
-            segments: [
-              { s: 194.5, e: 270.8 },
-              { s: 278, e: 319.7 },
-            ],
-          },
-          {
-            id: "kz",
-            name: "К/З",
-            color: "#E8934A",
-            segments: [
-              { s: 194.4, e: 273.8 },
-              { s: 278, e: 320.5 },
-              { s: 332.4, e: 358.79 },
-            ],
-          },
-          {
-            id: "oms",
-            name: "ОМС",
-            color: "#4A9EDB",
-            segments: [
-              { s: 0, e: 36 },
-              { s: 180.3, e: 275 },
-              { s: 278, e: 322 },
-              { s: 332.2, e: 358.79 },
-            ],
-          },
-          {
-            id: "rasklin",
-            name: "Расклин.",
-            color: "#6BC48C",
-            segments: [
-              { s: 0, e: 36 },
-              { s: 170, e: 275.7 },
-              { s: 278, e: 322 },
-              { s: 328, e: 358.79 },
-            ],
-          },
-          {
-            id: "nso",
-            name: "НСО 40-70",
-            color: "#B98CDB",
-            segments: [
-              { s: 0, e: 50 },
-              { s: 167, e: 275.7 },
-              { s: 278, e: 322 },
-              { s: 324, e: 358.79 },
-            ],
-          },
-          {
-            id: "dso",
-            name: "ДСО",
-            color: "#D9C548",
-            segments: [
-              { s: 0, e: 50 },
-              { s: 167, e: 275.7 },
-              { s: 278, e: 322 },
-              { s: 324, e: 358.79 },
-            ],
-          },
-          {
-            id: "zmp",
-            name: "ЗМП",
-            color: "#7A828C",
-            segments: [
-              { s: 0, e: 50 },
-              { s: 162, e: 275.7 },
-              { s: 278, e: 322 },
-              { s: 324, e: 358.79 },
-            ],
-          },
+          { id: "shoulder_strengthening", name: "Укрепление обочины", color: "#E8934A", segments: [] },
+          { id: "shoulder_base", name: "Устройство обочины", color: "#D71921", segments: [] },
         ];
 
-        const STORAGE_KEY = "road-progress-state";
+        const STORAGE_KEY = "road-shoulders-state";
         const UPDATE_STORAGE_KEY = "progressbars-last-seen-version";
-        const DATA_FILE_NAME = "road-progress-data.json";
+        const DATA_FILE_NAME = "road-shoulders-data.json";
         let state = null;
         let workspace = null;
         let openEditorId = null;
@@ -1629,9 +1561,15 @@
         }
         function layerCovered(layer) {
           return layer.segments.reduce(
-            (sum, seg) => sum + Math.max(0, seg.e - seg.s),
+            (sum, seg) => sum + Math.max(0, seg.e - seg.s) * segmentCompletion(seg),
             0,
           );
+        }
+        function segmentSides(seg) {
+          return Array.isArray(seg.sides) ? seg.sides.filter((side) => side === "left" || side === "right") : [];
+        }
+        function segmentCompletion(seg) {
+          return segmentSides(seg).length / 2;
         }
         function bridgeOverlapLength(seg) {
           return Math.max(0, Math.min(seg.e, BRIDGE_END) - Math.max(seg.s, BRIDGE_START));
@@ -1644,8 +1582,9 @@
             .map((seg) => ({
               s: Math.max(start, Number(seg.s)),
               e: Math.min(end, Number(seg.e)),
+              sides: segmentSides(seg),
             }))
-            .filter((seg) => Number.isFinite(seg.s) && Number.isFinite(seg.e) && seg.e > seg.s)
+            .filter((seg) => Number.isFinite(seg.s) && Number.isFinite(seg.e) && seg.e > seg.s && segmentCompletion(seg) > 0)
             .sort((a, b) => a.s - b.s);
           return intervals.reduce((merged, seg) => {
             const last = merged[merged.length - 1];
@@ -1694,8 +1633,8 @@
           const total = routeLength;
           const rawCovered = layerCovered(layer);
           const covered = Math.max(0, rawCovered - excluded);
-          const remaining = Math.max(0, total - rawCovered);
-          const pct = total > 0 ? (remaining <= 0.001 ? 100 : (covered / total) * 100) : 0;
+          const remaining = Math.max(0, total - covered);
+          const pct = total > 0 ? (covered / total) * 100 : 0;
           return { covered, remaining, total, excluded, pct };
         }
         function displayLayerStats(layer, start, end) {
@@ -1863,7 +1802,15 @@
             state.start = DEFAULT_START;
             state.total = DEFAULT_TOTAL;
           }
+          const shoulderOrder = { shoulder_strengthening: 0, shoulder_base: 1 };
+          state.layers.sort((a, b) => (shoulderOrder[a.id] ?? 50) - (shoulderOrder[b.id] ?? 50));
           state.layers.forEach((layer) => {
+            layer.segments = Array.isArray(layer.segments) ? layer.segments : [];
+            layer.segments.forEach((segment) => {
+              segment.sides = Array.isArray(segment.sides)
+                ? segment.sides.filter((side) => side === "left" || side === "right")
+                : [];
+            });
             if (!Number.isFinite(layer.excludedPk)) {
               layer.excludedPk =
                 safe.id === "project_main" && layer.id !== "shma" ? 2.30 : 0;
@@ -1932,14 +1879,14 @@
 
         const storage = {
           async loadFromFile() {
-            const res = await fetch("/api/data", { cache: "no-store" });
+            const res = await fetch("/api/shoulders-data", { cache: "no-store" });
             if (!res.ok) throw new Error("file load failed");
             const data = await res.json();
             if (!isValidState(data)) throw new Error("invalid file data");
             return data;
           },
           async saveToFile(data) {
-            const res = await fetch("/api/data", {
+            const res = await fetch("/api/shoulders-data", {
               method: "POST",
               headers: { "Content-Type": "application/json; charset=utf-8" },
               body: JSON.stringify(data),
@@ -2089,7 +2036,7 @@
           while (Date.now() - startedAt < 45000) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
             try {
-              const response = await fetch("/api/data", { cache: "no-store" });
+              const response = await fetch("/api/shoulders-data", { cache: "no-store" });
               if (serverStopped && response.ok) {
                 window.location.reload();
                 return;
@@ -2193,8 +2140,10 @@
                   0.15,
                   Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0),
                 );
-                return `<div class="seg" title="${fmt(seg.s)} — ${fmt(seg.e)} ПК (${fmtKm(seg.e - seg.s)} км)"
-                style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
+                const sides = segmentSides(seg);
+                const sideLabel = sides.length === 2 ? "слева и справа" : sides.length === 1 ? `только ${sides[0] === "left" ? "слева" : "справа"}` : "сторона не выбрана";
+                return `<div class="seg shoulder-seg" title="${fmt(seg.s)} — ${fmt(seg.e)} ПК (${fmtKm(seg.e - seg.s)} км, ${sideLabel})"
+                style="left:${left}%;width:${width}%;--segment-color:${layer.color}"><span class="shoulder-half ${sides.includes("left") ? "done" : ""}"></span><span class="shoulder-half ${sides.includes("right") ? "done" : ""}"></span></div>`;
               })
               .join("")}
           </div>
@@ -2233,6 +2182,8 @@
           <span class="arrow">→</span>
           <input type="number" inputmode="decimal" step="0.01" value="${seg.e}" data-layer="${layer.id}" data-idx="${idx}" data-field="e" title="Конец участка">
           <span class="len">${fmt(seg.e - seg.s)} ПК · ${metersLabel(seg.e - seg.s)}</span>
+          <label class="side-toggle"><input type="checkbox" data-side="left" ${segmentSides(seg).includes("left") ? "checked" : ""}> слева</label>
+          <label class="side-toggle"><input type="checkbox" data-side="right" ${segmentSides(seg).includes("right") ? "checked" : ""}> справа</label>
           <button class="del-btn" data-del-layer="${layer.id}" data-del-idx="${idx}" title="Удалить этот участок">✕</button>
         </div>
       `,
@@ -2264,6 +2215,8 @@
         <input type="number" inputmode="decimal" step="0.01" placeholder="до" style="width:78px" id="new-e-${layer.id}" title="Конец нового участка">
         <input type="text" placeholder="ответственный" style="width:110px" id="new-person-${layer.id}" title="Кто выполнил участок">
         <input type="text" placeholder="качество / акт" style="width:120px" id="new-quality-${layer.id}" title="Краткая отметка о качестве или акте">
+        <label class="side-toggle"><input type="checkbox" id="new-left-${layer.id}"> слева</label>
+        <label class="side-toggle"><input type="checkbox" id="new-right-${layer.id}"> справа</label>
         <button class="add-btn" data-add-layer="${layer.id}" title="Добавить участок в этот слой">+ участок</button>
         <button class="del-btn" data-del-full-layer="${layer.id}" style="margin-left:auto" title="Удалить весь слой">удалить слой</button>
       </div>
@@ -2286,6 +2239,19 @@
                 commitLayer(layer, before, "Изменён участок слоя", { segmentBefore: beforeSegment, segmentAfter: { ...seg } });
               });
             });
+          layersEl.querySelectorAll(".editor input[data-side]").forEach((inp) => inp.addEventListener("change", () => {
+            const layer = state.layers.find((l) => l.id === inp.closest(".editor").dataset.layerId);
+            const row = inp.closest(".seg-row");
+            const segmentInputs = row.querySelectorAll("input[data-field]");
+            const seg = layer.segments[parseInt(segmentInputs[0].dataset.idx)];
+            const before = JSON.parse(JSON.stringify(seg));
+            const sides = new Set(segmentSides(seg));
+            if (inp.checked) sides.add(inp.dataset.side); else sides.delete(inp.dataset.side);
+            seg.sides = [...sides];
+            journal("Изменены стороны участка", `Слой: ${layer.name}, участок: ${segmentLabel(seg)}, стороны: ${seg.sides.length ? seg.sides.join(" и ") : "не выбраны"}`, { layer: layer.name, before, after: JSON.parse(JSON.stringify(seg)) });
+            renderLayers();
+            scheduleSave();
+          }));
           layersEl.querySelectorAll("[data-plan-layer]").forEach((inp) => inp.addEventListener("change", () => {
             const layer = state.layers.find((l) => l.id === inp.dataset.planLayer);
             const before = layer.planPercent || 0;
@@ -2371,8 +2337,12 @@
               }
               const layer = state.layers.find((l) => l.id === id);
               const before = JSON.parse(JSON.stringify(layer.segments));
-              layer.segments.push({ s, e, status: "Выполнено", responsible: $("#new-person-" + id).value.trim(), quality: $("#new-quality-" + id).value.trim(), date: new Date().toLocaleDateString("ru-RU") });
-              commitLayer(layer, before, "Добавлен участок слоя", { segmentAfter: { s, e } });
+              const sides = [];
+              if ($("#new-left-" + id).checked) sides.push("left");
+              if ($("#new-right-" + id).checked) sides.push("right");
+              if (!sides.length) { alert("Выберите сторону: слева, справа или обе."); return; }
+              layer.segments.push({ s, e, sides, status: "Выполнено", responsible: $("#new-person-" + id).value.trim(), quality: $("#new-quality-" + id).value.trim(), date: new Date().toLocaleDateString("ru-RU") });
+              commitLayer(layer, before, "Добавлен участок слоя", { segmentAfter: { s, e, sides } });
             });
           });
         }
@@ -2709,7 +2679,7 @@
                  ${tableRows}
                </table>`;
           el.innerHTML = `
-      <h1>${frontReport ? "Отчёт по допустимым фронтам работ" : "Прогресс укладки слоёв"}</h1>
+      <h1>${frontReport ? "Отчёт по допустимым фронтам работ" : "Обочины"}</h1>
       <div class="pdf-sub">Дата: ${reportDate()} · Протяжённость: ${fmtKm(length)} км (ПК ${fmtReportPk(start)} — ${fmtReportPk(total)} · ${metersLabel(length)})</div>
       <div class="pdf-overall">
         <div class="pdf-overall-main">
@@ -2806,7 +2776,7 @@
               heightLeft -= pageHeight - margin * 2;
             }
 
-            const filePrefix = mode === "front" ? "otchet-fronty" : "otchet-progress";
+            const filePrefix = mode === "front" ? "otchet-fronty" : "obochiny";
             pdf.save(filePrefix + "-" + fileStamp() + ".pdf");
             setStatus(mode === "front" ? "отчёт по фронтам сохранён" : "сводка PDF сохранена", true);
           } catch (err) {
@@ -2824,7 +2794,7 @@
           btn.disabled = true;
           setStatus("формирование Word…");
           try {
-            const res = await fetch("/api/export/word", {
+            const res = await fetch("/api/shoulders/export/word", {
               method: "POST",
               headers: { "Content-Type": "application/json; charset=utf-8" },
               body: JSON.stringify(workspace),
@@ -2834,7 +2804,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
-            link.download = "otchet-progress-" + fileStamp() + ".docx";
+            link.download = "otchet-obochiny-" + fileStamp() + ".docx";
             link.click();
             URL.revokeObjectURL(url);
             setStatus("Word сохранён", true);
@@ -2865,16 +2835,16 @@
         async function exportExcel() {
           try {
             await save();
-            const res = await fetch("/api/export/excel");
+            const res = await fetch("/api/shoulders/export/excel");
             if (!res.ok) throw new Error();
             const url = URL.createObjectURL(await res.blob());
-            const link = document.createElement("a"); link.href = url; link.download = "progress-" + fileStamp() + ".xlsx"; link.click(); URL.revokeObjectURL(url);
+            const link = document.createElement("a"); link.href = url; link.download = "obochiny-" + fileStamp() + ".xlsx"; link.click(); URL.revokeObjectURL(url);
             setStatus("Excel сохранён", true);
           } catch (e) { setStatus("ошибка Excel — запустите файл запуска"); }
         }
         async function importExcel(file) {
           try {
-            const res = await fetch("/api/import/excel", { method:"POST", headers:{"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, body:file });
+            const res = await fetch("/api/shoulders/import/excel", { method:"POST", headers:{"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, body:file });
             if (!res.ok) throw new Error(await res.text());
             workspace = normalizeWorkspace(await res.json()); selectActiveProject(); journal("Импорт Excel", file.name); render(); scheduleSave(); setStatus("Excel импортирован", true);
           } catch (e) { alert("Не удалось импортировать файл. Используйте лист «Участки» с колонками «Слой», «От, ПК», «До, ПК»."); }
@@ -2914,7 +2884,7 @@
             if (!isValidState(incoming)) throw new Error("неверная структура файла");
             if (!confirm("Импорт заменит текущие данные. Перед этим будет создана резервная копия. Продолжить?")) return;
             await save();
-            try { await fetch("/api/backups/create", { method: "POST" }); } catch (e) { /* browser-only mode */ }
+            try { await fetch("/api/shoulders/backups/create", { method: "POST" }); } catch (e) { /* browser-only mode */ }
             workspace = normalizeWorkspace(incoming);
             selectActiveProject();
             journal("Импорт данных", `Файл: ${file.name}`, { sourceFile: file.name, import: true });
@@ -2926,11 +2896,11 @@
             alert("Не удалось импортировать данные: " + (e.message || "неверный JSON-файл"));
           }
         }
-        async function createBackup() { try { await save(); const res = await fetch("/api/backups/create", {method:"POST"}); if (!res.ok) throw new Error(); setStatus("резервная копия создана", true); } catch(e) { setStatus("бэкап доступен через файл запуска"); } }
+        async function createBackup() { try { await save(); const res = await fetch("/api/shoulders/backups/create", {method:"POST"}); if (!res.ok) throw new Error(); setStatus("резервная копия создана", true); } catch(e) { setStatus("бэкап доступен через файл запуска"); } }
         async function undoLastChange() {
           if (!confirm("Отменить последнее сохранённое изменение? Текущее состояние будет сохранено в резервных копиях.")) return;
           try {
-            const res = await fetch("/api/undo", { method: "POST" });
+            const res = await fetch("/api/shoulders/undo", { method: "POST" });
             if (!res.ok) throw new Error(await res.text());
             workspace = normalizeWorkspace(await res.json());
             selectActiveProject();
@@ -2943,7 +2913,7 @@
           }
         }
         async function restoreBackup() {
-          try { const backups = await (await fetch("/api/backups")).json(); if (!backups.length) return alert("Резервных копий пока нет."); const text = backups.slice(0, 10).map((b,i) => `${i+1}. ${b.name}`).join("\n"); const n = parseInt(prompt("Введите номер копии для восстановления:\n" + text), 10); if (!n || !backups[n-1]) return; const res = await fetch("/api/backups/restore", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name:backups[n-1].name})}); if (!res.ok) throw new Error(); workspace = normalizeWorkspace(await res.json()); selectActiveProject(); render(); setStatus("копия восстановлена", true); } catch(e) { alert("Не удалось восстановить копию."); }
+          try { const backups = await (await fetch("/api/shoulders/backups")).json(); if (!backups.length) return alert("Резервных копий пока нет."); const text = backups.slice(0, 10).map((b,i) => `${i+1}. ${b.name}`).join("\n"); const n = parseInt(prompt("Введите номер копии для восстановления:\n" + text), 10); if (!n || !backups[n-1]) return; const res = await fetch("/api/shoulders/backups/restore", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name:backups[n-1].name})}); if (!res.ok) throw new Error(); workspace = normalizeWorkspace(await res.json()); selectActiveProject(); render(); setStatus("копия восстановлена", true); } catch(e) { alert("Не удалось восстановить копию."); }
         }
 
 

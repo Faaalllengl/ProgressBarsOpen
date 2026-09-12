@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Общий отчёт проекта</title>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    :root{--red:#b3131b;--ink:#222831;--muted:#68717c;--line:#d8dde3;--surface:#fff;--bg:#eef1f4;--green:#4b9d69;--track:#e5e8ec}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Arial,sans-serif}.wrap{max-width:1180px;margin:auto;padding:24px 20px 44px}.hdr{display:flex;justify-content:space-between;align-items:center;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:16px}.eyebrow{color:var(--red);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.hdr h1{margin:4px 0 0;font-size:28px}.module-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}.module-tabs a,.btn{display:inline-block;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);padding:9px 13px;text-decoration:none;cursor:pointer;font-weight:700}.module-tabs a.active{color:var(--red);border-color:var(--red)}.report-btn{border-color:var(--red)!important;background:var(--red)!important;color:#fff!important}.actions{display:flex;gap:10px;align-items:center}.status{color:var(--muted)}.report{background:#fff;padding:28px;border-radius:10px;box-shadow:0 2px 12px #1f29371a}.cover{border-bottom:2px solid var(--red);padding-bottom:18px;margin-bottom:20px}.cover h2{font-size:24px;margin:0 0 4px}.cover p{margin:3px 0;color:var(--muted)}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 24px}.metric{border:1px solid var(--line);border-radius:7px;padding:13px;background:#fafbfc}.metric small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase}.metric strong{display:block;font-size:23px;margin-top:4px}.module{margin-top:28px;break-inside:avoid}.module h2{border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:12px}.module-meta{color:var(--muted);margin-bottom:12px}.layer{border:1px solid var(--line);border-radius:7px;padding:10px 12px;margin:9px 0;break-inside:avoid}.layer-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px}.layer-name{font-weight:700}.layer-percent{color:var(--muted);white-space:nowrap}.track{position:relative;height:24px;background:var(--track);border-radius:4px;overflow:hidden}.segment{position:absolute;top:0;height:100%;background:var(--red);opacity:.92}.segment.partial{background:repeating-linear-gradient(135deg,var(--red) 0 8px,#f0a1a5 8px 12px)}.shoulder-segment{display:flex;background:transparent}.shoulder-half{width:50%;height:100%;background:repeating-linear-gradient(135deg,#9aa2aa 0 4px,#dfe2e5 4px 8px)}.shoulder-half.done{background:var(--red)}.legend{font-size:11px;color:var(--muted);margin-top:5px}.data-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px}.data-table th,.data-table td{border:1px solid var(--line);padding:6px 7px;text-align:left}.data-table th{background:#f3f5f7}.empty{color:var(--muted);padding:12px 0}.foot{border-top:1px solid var(--line);margin-top:28px;padding-top:10px;color:var(--muted);font-size:11px}
+    @media(max-width:760px){.hdr{display:block}.actions{margin-top:12px}.summary-grid{grid-template-columns:repeat(2,1fr)}.report{padding:18px}.data-table{font-size:11px}}
+    @media print{body{background:#fff}.wrap{max-width:none;padding:0}.hdr,.module-tabs,.actions{display:none}.report{box-shadow:none;padding:0}.module{break-before:page}.module:first-of-type{break-before:auto}.cover{padding-top:0}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hdr">
+      <div><div class="eyebrow">ProgressBarsOpen</div><h1>Общий отчёт проекта</h1></div>
+      <div class="actions"><button class="btn report-btn" id="pdfBtn">Скачать общий отчёт PDF</button><span class="status" id="status">загрузка…</span></div>
+    </header>
+    <nav class="module-tabs">
+      <a href="road-progress.html">Прогресс укладки слоёв</a>
+      <a href="road-shoulders.html">Обочины</a>
+      <a href="road-barriers.html">Дорожные ограждения</a>
+      <a href="lotki.html">Лотки</a>
+      <a class="active report-btn" href="project-report.html">Общий отчёт PDF</a>
+    </nav>
+    <main class="report" id="report"></main>
+  </div>
+  <script>
+    (() => {
+      const $ = (s) => document.querySelector(s);
+      const report = $("#report");
+      const status = $("#status");
+      const fmt = (n) => (Math.round(Number(n) * 100) / 100).toString().replace(".", ",");
+      const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+      const activeState = (data) => data?.projects?.find((p) => p.id === data.activeProjectId)?.state || data?.projects?.[0]?.state || data || { start:0, total:0, layers:[] };
+      const segmentsLength = (segments, shoulder = false) => (segments || []).reduce((sum, s) => sum + Math.max(0, Number(s.e ?? s.end) - Number(s.s ?? s.start)) * (shoulder ? (Array.isArray(s.sides) ? s.sides.length / 2 : 0) : 1), 0);
+      const stateStats = (state, shoulder = false) => {
+        const route = Math.max(0, Number(state.total) - Number(state.start || 0));
+        const layers = state.layers || [];
+        const covered = layers.reduce((sum, layer) => sum + segmentsLength(layer.segments, shoulder), 0);
+        const denominator = route * layers.length;
+        return { route, covered, percent: denominator ? Math.min(100, covered / denominator * 100) : 0 };
+      };
+      const bar = (layer, state, shoulder = false) => {
+        const start = Number(state.start || 0), route = Math.max(0.001, Number(state.total) - start);
+        return (layer.segments || []).map((s) => {
+          const a = Number(s.s ?? s.start), b = Number(s.e ?? s.end), left = Math.max(0, (a - start) / route * 100), width = Math.max(.2, (b - a) / route * 100);
+          if (!shoulder) return `<span class="segment" style="left:${left}%;width:${width}%" title="ПК ${fmt(a)}–${fmt(b)}"></span>`;
+          const sides = Array.isArray(s.sides) ? s.sides : [];
+          return `<span class="segment shoulder-segment" style="left:${left}%;width:${width}%"><i class="shoulder-half ${sides.includes("left") ? "done" : ""}"></i><i class="shoulder-half ${sides.includes("right") ? "done" : ""}"></i></span>`;
+        }).join("");
+      };
+      const layerBlock = (state, shoulder = false) => (state.layers || []).map((layer) => {
+        const covered = segmentsLength(layer.segments, shoulder), route = Math.max(0, Number(state.total) - Number(state.start || 0)), pct = route ? covered / route * 100 : 0;
+        const rows = (layer.segments || []).map((s, i) => `<tr><td>${i + 1}</td><td>${fmt(s.s ?? s.start)}</td><td>${fmt(s.e ?? s.end)}</td><td>${shoulder ? (Array.isArray(s.sides) ? s.sides.map((x) => x === "left" ? "слева" : "справа").join(", ") || "—" : "—") : "—"}</td><td>${fmt(Math.max(0, Number(s.e ?? s.end) - Number(s.s ?? s.start)))}</td><td>${esc(s.status || (s.completed ? "Выполнено" : "Не выполнено"))}</td></tr>`).join("");
+        return `<section class="layer"><div class="layer-head"><span class="layer-name">${esc(layer.name)}</span><span class="layer-percent">${pct.toFixed(1)}% · ${fmt(covered)} км</span></div><div class="track">${bar(layer, state, shoulder)}</div><div class="legend">План: ${Number(layer.planPercent || 0).toFixed(1)}% · Выполнено: ${fmt(covered)} км</div>${rows ? `<table class="data-table"><thead><tr><th>№</th><th>От</th><th>До</th><th>Сторона</th><th>Длина</th><th>Статус</th></tr></thead><tbody>${rows}</tbody></table>` : `<div class="empty">Участки не добавлены.</div>`}</section>`;
+      });
+      const moduleSection = (title, state, shoulder = false) => { const stats = stateStats(state, shoulder); return `<section class="module"><h2>${title}</h2><div class="module-meta">Протяжённость: ${fmt(stats.route)} км · Выполнение модуля: <b>${stats.percent.toFixed(1)}%</b></div>${layerBlock(state, shoulder).join("") || `<div class="empty">Данные отсутствуют.</div>`}</section>`; };
+      const lotkiSection = (data) => { const items = data?.segments || [], total = items.reduce((s, x) => s + Math.max(0, x.end - x.start) * Math.max(1, (x.sides || []).length), 0), done = items.filter((x) => x.completed).reduce((s, x) => s + Math.max(0, x.end - x.start) * Math.max(1, (x.sides || []).length), 0), rows = items.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.startText || fmt(x.start))}</td><td>${esc(x.endText || fmt(x.end))}</td><td>${(x.sides || []).map((s) => s === "left" ? "слева" : "справа").join(", ")}</td><td>${fmt(x.end - x.start)}</td><td>${x.completed ? "Выполнено" : "Не выполнено"}</td></tr>`).join(""); return `<section class="module"><h2>Лотки</h2><div class="module-meta">Отрезков: ${items.length} · Выполнено: ${total ? (done / total * 100).toFixed(1) : "0.0"}% · Длина: ${fmt(total)} условных ПК</div>${rows ? `<table class="data-table"><thead><tr><th>№</th><th>От</th><th>До</th><th>Сторона</th><th>Длина</th><th>Статус</th></tr></thead><tbody>${rows}</tbody></table>` : `<div class="empty">Данные отсутствуют.</div>`}</section>`; };
+      async function load() { const [main, barriers, shoulders, lotki] = await Promise.all([fetch("/api/data", {cache:"no-store"}).then((r) => r.json()), fetch("/api/barriers-data", {cache:"no-store"}).then((r) => r.json()), fetch("/api/shoulders-data", {cache:"no-store"}).then((r) => r.json()), fetch("/api/lotki-data", {cache:"no-store"}).then((r) => r.json())]); const ms = activeState(main), bs = activeState(barriers), ss = activeState(shoulders), m = stateStats(ms), b = stateStats(bs), s = stateStats(ss, true), lItems = lotki.segments || [], lTotal = lItems.reduce((sum, x) => sum + Math.max(0, x.end - x.start) * Math.max(1, (x.sides || []).length), 0), lDone = lItems.filter((x) => x.completed).reduce((sum, x) => sum + Math.max(0, x.end - x.start) * Math.max(1, (x.sides || []).length), 0), lPct = lTotal ? lDone / lTotal * 100 : 0; report.innerHTML = `<div class="cover"><h2>Общий отчёт проекта</h2><p>Дата формирования: ${new Date().toLocaleString("ru-RU")}</p><p>Отчёт объединяет данные всех модулей проекта. Каждый модуль показан отдельным разделом со своей шкалой и единицами.</p></div><div class="summary-grid"><div class="metric"><small>Прогресс укладки</small><strong>${m.percent.toFixed(1)}%</strong></div><div class="metric"><small>Обочины</small><strong>${s.percent.toFixed(1)}%</strong></div><div class="metric"><small>Ограждения</small><strong>${b.percent.toFixed(1)}%</strong></div><div class="metric"><small>Лотки</small><strong>${lPct.toFixed(1)}%</strong></div></div>${moduleSection("Прогресс укладки слоёв", ms)}${moduleSection("Обочины", ss, true)}${moduleSection("Дорожные ограждения", bs)}${lotkiSection(lotki)}<div class="foot">Отчёт сформирован автоматически. Данные модулей не объединяются в одну шкалу, чтобы не смешивать пикетаж, километры и двухсторонние участки.</div>`; status.textContent = "готово"; }
+      async function exportPdf() { const btn = $("#pdfBtn"); btn.disabled = true; status.textContent = "формирование PDF…"; try { const canvas = await html2canvas(report, {scale:2, backgroundColor:"#fff", useCORS:true}); const {jsPDF} = window.jspdf; const pdf = new jsPDF("p", "mm", "a4"); const margin = 10, pageWidth = pdf.internal.pageSize.getWidth(), pageHeight = pdf.internal.pageSize.getHeight(), imageWidth = pageWidth - margin * 2, imageHeight = canvas.height * imageWidth / canvas.width; let remaining = imageHeight, position = margin; pdf.addImage(canvas.toDataURL("image/png"), "PNG", margin, position, imageWidth, imageHeight); remaining -= pageHeight - margin * 2; while (remaining > 0) { position = remaining - imageHeight + margin; pdf.addPage(); pdf.addImage(canvas.toDataURL("image/png"), "PNG", margin, position, imageWidth, imageHeight); remaining -= pageHeight - margin * 2; } pdf.save("obshchiy-otchet-proekta-" + new Date().toISOString().slice(0, 10) + ".pdf"); status.textContent = "PDF сохранён"; } catch (e) { console.error(e); status.textContent = "ошибка PDF"; alert("Не удалось сформировать общий отчёт PDF."); } finally { btn.disabled = false; } }
+      $("#pdfBtn").addEventListener("click", exportPdf); load().catch((e) => { console.error(e); status.textContent = "ошибка загрузки"; report.innerHTML = `<div class="empty">Не удалось загрузить данные модулей.</div>`; });
+    })();
+  </script>
+</body>
+</html>

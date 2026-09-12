@@ -60,7 +60,7 @@ def _add_table(document: Document, headers: list[str], rows: list[list[str]]):
     return table
 
 
-def build_word_document(data: dict) -> bytes:
+def build_word_document(data: dict, unit: str = "ПК") -> bytes:
     project_name, state = _active_project(data)
     start = float(state.get("start", 0))
     end = float(state["total"])
@@ -72,11 +72,13 @@ def build_word_document(data: dict) -> bytes:
     style.font.name = "Calibri"
     style.font.size = Pt(10)
 
-    document.add_heading("Отчёт по прогрессу укладки слоёв", 0)
+    title = "Отчёт по дорожным ограждениям" if unit == "км" else "Отчёт по прогрессу укладки слоёв"
+    document.add_heading(title, 0)
     document.add_paragraph(f"Объект: {project_name}")
     document.add_paragraph(f"Дата формирования: {datetime.now():%d.%m.%Y %H:%M}")
     document.add_heading("1. Общие сведения", level=1)
-    _add_table(document, ["Показатель", "Значение"], [["Протяжённость трассы", f"ПК {_pk(start)} — {_pk(end)} ({_meters(length)})"], ["Количество слоёв", str(len(state.get("layers", [])))]] )
+    route_value = f"{_fmt(start)} км — {_fmt(end)} км" if unit == "км" else f"ПК {_pk(start)} — {_pk(end)} ({_meters(length)})"
+    _add_table(document, ["Показатель", "Значение"], [["Протяжённость трассы", route_value], ["Количество слоёв", str(len(state.get("layers", [])))]] )
 
     document.add_heading("2. План и факт", level=1)
     summary_rows = []
@@ -88,24 +90,29 @@ def build_word_document(data: dict) -> bytes:
             plan_date = ".".join(reversed(plan_date.split("-")))
         else:
             plan_date = "—"
-        summary_rows.append([layer.get("name", ""), f"{plan:.1f}%", plan_date, f"{actual:.1f}%", f"{actual-plan:+.1f}", f"{_fmt(covered)} ПК", f"{_fmt(remaining)} ПК"])
+        summary_rows.append([layer.get("name", ""), f"{plan:.1f}%", plan_date, f"{actual:.1f}%", f"{actual-plan:+.1f}", f"{_fmt(covered)} {unit}", f"{_fmt(remaining)} {unit}"])
     _add_table(document, ["Слой", "План", "Дата", "Факт", "Отклонение, п.п.", "Готово", "Осталось"], summary_rows)
 
     document.add_heading("3. Участки, контроль и исполнители", level=1)
     for index, layer in enumerate(state.get("layers", []), 1):
         document.add_heading(f"3.{index}. {layer.get('name', '')}", level=2)
         covered, remaining, actual = _stats(layer, start, end)
-        document.add_paragraph(f"Выполнено: {actual:.1f}% ({_meters(covered)}). Осталось: {_meters(remaining)}.")
+        progress_value = f"{_fmt(covered)} км" if unit == "км" else _meters(covered)
+        remaining_value = f"{_fmt(remaining)} км" if unit == "км" else _meters(remaining)
+        document.add_paragraph(f"Выполнено: {actual:.1f}% ({progress_value}). Осталось: {remaining_value}.")
         segments = sorted(layer.get("segments", []), key=lambda item: item["s"])
         rows = []
         for n, seg in enumerate(segments, 1):
-            rows.append([str(n), _pk(seg["s"]), _pk(seg["e"]), _meters(seg["e"]-seg["s"]), seg.get("status", "Выполнено"), seg.get("responsible", ""), seg.get("date", ""), seg.get("quality", ""), seg.get("note", "")])
+            if unit == "км":
+                rows.append([str(n), _fmt(seg["s"]), _fmt(seg["e"]), _fmt(seg["e"]-seg["s"]), seg.get("status", "Выполнено"), seg.get("responsible", ""), seg.get("date", ""), seg.get("quality", ""), seg.get("note", "")])
+            else:
+                rows.append([str(n), _pk(seg["s"]), _pk(seg["e"]), _meters(seg["e"]-seg["s"]), seg.get("status", "Выполнено"), seg.get("responsible", ""), seg.get("date", ""), seg.get("quality", ""), seg.get("note", "")])
         if rows:
-            _add_table(document, ["№", "От, ПК", "До, ПК", "Длина", "Статус", "Ответственный", "Дата", "Качество", "Комментарий"], rows)
+            _add_table(document, ["№", f"От, {unit}", f"До, {unit}", f"Длина, {unit}", "Статус", "Ответственный", "Дата", "Качество", "Комментарий"], rows)
         else:
             document.add_paragraph("Участки не указаны.")
 
-    document.add_paragraph("Отчёт сформирован автоматически. 1 ПК = 100 м.")
+    document.add_paragraph("Отчёт сформирован автоматически." if unit == "км" else "Отчёт сформирован автоматически. 1 ПК = 100 м.")
     output = BytesIO()
     document.save(output)
     return output.getvalue()
