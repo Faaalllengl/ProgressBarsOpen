@@ -902,6 +902,19 @@
         bottom: 0;
         z-index: 2;
       }
+      .pdf-report .pdf-shoulder-seg {
+        display: flex;
+        overflow: hidden;
+        background: transparent !important;
+      }
+      .pdf-report .pdf-shoulder-half {
+        width: 50%;
+        height: 100%;
+        background: repeating-linear-gradient(135deg, rgba(61, 126, 166, 0.35) 0 4px, rgba(61, 126, 166, 0.08) 4px 8px), #aeb6bf;
+      }
+      .pdf-report .pdf-shoulder-half.done {
+        background: var(--pdf-segment-color);
+      }
       .pdf-report .pdf-front-seg {
         position: absolute;
         top: 0;
@@ -2625,7 +2638,8 @@
                   0.15,
                   Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0),
                 );
-                return `<div class="pdf-seg" style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
+                const sides = segmentSides(seg);
+                return `<div class="pdf-seg pdf-shoulder-seg" style="left:${left}%;width:${width}%;--pdf-segment-color:${layer.color}" title="${fmtReportPk(seg.s)}–${fmtReportPk(seg.e)} ПК, ${sides.length === 2 ? "слева и справа" : sides.includes("left") ? "слева" : sides.includes("right") ? "справа" : "сторона не выбрана"}"><span class="pdf-shoulder-half ${sides.includes("left") ? "done" : ""}"></span><span class="pdf-shoulder-half ${sides.includes("right") ? "done" : ""}"></span></div>`;
               })
               .join("");
             chartHtml += `
@@ -2642,8 +2656,11 @@
               const segList =
                 sortedSegments(layer)
                   .map(
-                    (seg) =>
-                      `${fmtReportPk(seg.s)}–${fmtReportPk(seg.e)} (${fmtKm(Math.max(0, seg.e - seg.s - bridgeOverlapLength(seg)))} км)`,
+                    (seg) => {
+                      const sides = segmentSides(seg);
+                      const sideLabel = sides.length === 2 ? "слева и справа" : sides.includes("left") ? "слева" : sides.includes("right") ? "справа" : "сторона не выбрана";
+                      return `${fmtReportPk(seg.s)}–${fmtReportPk(seg.e)} (${fmtKm(Math.max(0, seg.e - seg.s - bridgeOverlapLength(seg)))} км, ${sideLabel})`;
+                    },
                   )
                   .join("; ") || "—";
               return `<tr>
