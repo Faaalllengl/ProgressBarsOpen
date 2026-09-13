@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.13-b2436f0",
+  "version": "2026.09.13-b5901bc",
   "date": "2026-09-13",
   "title": "Обновление ProgressBarsOpen",
   "changes": [
-    "Project update"
+    "Создавать JSON модулей при первом запуске"
   ]
 }
