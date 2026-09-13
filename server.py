@@ -142,6 +142,49 @@ def _write_json_file(path: Path, data: dict):
     tmp.replace(path)
 
 
+def _ensure_module_data_files():
+    """Create ignored module data files on a new or cleaned installation."""
+    defaults = {
+        SHOULDERS_DATA_FILE: {
+            "version": 2,
+            "activeProjectId": "shoulders_main",
+            "projects": [{
+                "id": "shoulders_main",
+                "name": "Основной объект",
+                "state": {
+                    "start": 0,
+                    "total": 358.79,
+                    "layers": [
+                        {"id": "shoulder_strengthening", "name": "Укрепление обочины", "color": "#E8934A", "segments": []},
+                        {"id": "shoulder_base", "name": "Устройство обочины", "color": "#D71921", "segments": []},
+                    ],
+                    "bridge": {"layers": []},
+                },
+            }],
+        },
+        BARriers_DATA_FILE: {
+            "version": 2,
+            "activeProjectId": "barriers_main",
+            "projects": [{
+                "id": "barriers_main",
+                "name": "Основной объект",
+                "state": {
+                    "start": 0,
+                    "total": 1,
+                    "layers": [
+                        {"id": "barrier", "name": "Дорожное ограждение", "color": "#D71921", "segments": []},
+                        {"id": "signal", "name": "Сигнальные устройства", "color": "#E8934A", "segments": []},
+                    ],
+                    "bridge": {"layers": []},
+                },
+            }],
+        },
+    }
+    for path, data in defaults.items():
+        if not path.is_file():
+            _write_json_file(path, data)
+
+
 def _project_state(data):
     """Return an active project state from both legacy and v2 data formats."""
     if "projects" not in data:
@@ -1063,6 +1106,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def main():
+    _ensure_module_data_files()
     url = f"http://127.0.0.1:{PORT}/road-progress.html"
     print("Прогресс укладки слоёв")
     print(f"  Страница: {url}")
