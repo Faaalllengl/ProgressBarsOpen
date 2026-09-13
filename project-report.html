@@ -75,7 +75,84 @@
       const moduleSection = (title, state, shoulder = false, unit = "km") => { const stats = stateStats(state, shoulder), routeLabel = unit === "pk" ? `${fmt(stats.route)} ПК (${fmt(stats.route * 0.1)} км)` : `${fmt(stats.route)} км`; return `<section class="module"><h2>${title}</h2><div class="module-meta">Протяжённость: ${routeLabel} · Выполнение модуля: <b>${stats.percent.toFixed(1)}%</b></div>${layerBlock(state, shoulder, unit).join("") || `<div class="empty">Данные отсутствуют.</div>`}</section>`; };
       const lotkiSection = (data) => { const items = data?.segments || [], lengthMeters = (x) => Math.max(0, x.end - x.start) * 100 * Math.max(1, (x.sides || []).length), total = items.reduce((s, x) => s + lengthMeters(x), 0), done = items.filter((x) => x.completed).reduce((s, x) => s + lengthMeters(x), 0), rows = items.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.startText || fmt(x.start))}</td><td>${esc(x.endText || fmt(x.end))}</td><td>${(x.sides || []).map((s) => s === "left" ? "слева" : "справа").join(", ")}</td><td>${Math.round(lengthMeters(x)).toLocaleString("ru-RU")} м</td><td>${x.completed ? "Выполнено" : "Не выполнено"}</td></tr>`).join(""), track = items.map((x) => `<span class="segment lotki-segment ${x.completed ? "done" : ""}" style="width:${total ? lengthMeters(x) / total * 100 : 0}%" title="${esc(x.startText)}–${esc(x.endText)}"></span>`).join(""); return `<section class="module"><h2>Лотки</h2><div class="module-meta">Отрезков: ${items.length} · Выполнено: ${total ? (done / total * 100).toFixed(1) : "0.0"}% · Выполнено: ${Math.round(done).toLocaleString("ru-RU")} м из ${Math.round(total).toLocaleString("ru-RU")} м</div><div class="track lotki-track">${track || `<span class="empty">Данные отсутствуют.</span>`}</div><div class="legend"><span style="color:var(--green)">Выполнено</span> · серый — не выполнено</div>${rows ? `<table class="data-table"><thead><tr><th>№</th><th>От ПК</th><th>До ПК</th><th>Сторона</th><th>Длина, м</th><th>Статус</th></tr></thead><tbody>${rows}</tbody></table>` : `<div class="empty">Данные отсутствуют.</div>`}</section>`; };
       async function load() { const [main, barriers, shoulders, lotki] = await Promise.all([fetch("/api/data", {cache:"no-store"}).then((r) => r.json()), fetch("/api/barriers-data", {cache:"no-store"}).then((r) => r.json()), fetch("/api/shoulders-data", {cache:"no-store"}).then((r) => r.json()), fetch("/api/lotki-data", {cache:"no-store"}).then((r) => r.json())]); const ms = activeState(main), bs = activeState(barriers), ss = activeState(shoulders), m = stateStats(ms), b = stateStats(bs), s = stateStats(ss, true), lItems = lotki.segments || [], lTotal = lItems.reduce((sum, x) => sum + Math.max(0, x.end - x.start) * 100 * Math.max(1, (x.sides || []).length), 0), lDone = lItems.filter((x) => x.completed).reduce((sum, x) => sum + Math.max(0, x.end - x.start) * 100 * Math.max(1, (x.sides || []).length), 0), lPct = lTotal ? lDone / lTotal * 100 : 0; report.innerHTML = `<div class="cover"><h2>Общий отчёт проекта</h2><p>Дата формирования: ${new Date().toLocaleString("ru-RU")}</p><p>Отчёт объединяет данные всех модулей проекта. Каждый модуль показан отдельным разделом со своей шкалой и исходными единицами измерения.</p></div><div class="summary-grid"><div class="metric"><small>Прогресс укладки</small><strong>${m.percent.toFixed(1)}%</strong></div><div class="metric"><small>Обочины</small><strong>${s.percent.toFixed(1)}%</strong></div><div class="metric"><small>Ограждения</small><strong>${b.percent.toFixed(1)}%</strong></div><div class="metric"><small>Лотки</small><strong>${lPct.toFixed(1)}%</strong></div></div>${moduleSection("Прогресс укладки слоёв", ms, false, "pk")}${moduleSection("Обочины", ss, true, "pk")}${moduleSection("Дорожные ограждения", bs, false, "km")}${lotkiSection(lotki)}<div class="foot">Отчёт сформирован автоматически. Пикетаж и километры показаны в исходных единицах соответствующих модулей.</div>`; status.textContent = "готово"; }
-      async function exportPdf() { const btn = $("#pdfBtn"); btn.disabled = true; status.textContent = "формирование PDF…"; try { const canvas = await html2canvas(report, {scale:2, backgroundColor:"#fff", useCORS:true}); const {jsPDF} = window.jspdf; const pdf = new jsPDF("p", "mm", "a4"); const margin = 10, pageWidth = pdf.internal.pageSize.getWidth(), pageHeight = pdf.internal.pageSize.getHeight(), imageWidth = pageWidth - margin * 2, imageHeight = canvas.height * imageWidth / canvas.width; let remaining = imageHeight, position = margin; pdf.addImage(canvas.toDataURL("image/png"), "PNG", margin, position, imageWidth, imageHeight); remaining -= pageHeight - margin * 2; while (remaining > 0) { position = remaining - imageHeight + margin; pdf.addPage(); pdf.addImage(canvas.toDataURL("image/png"), "PNG", margin, position, imageWidth, imageHeight); remaining -= pageHeight - margin * 2; } pdf.save("obshchiy-otchet-proekta-" + new Date().toISOString().slice(0, 10) + ".pdf"); status.textContent = "PDF сохранён"; } catch (e) { console.error(e); status.textContent = "ошибка PDF"; alert("Не удалось сформировать общий отчёт PDF."); } finally { btn.disabled = false; } }
+       async function exportPdf() {
+         const btn = $("#pdfBtn");
+         btn.disabled = true;
+         status.textContent = "формирование PDF…";
+         try {
+           const {jsPDF} = window.jspdf;
+           const pdf = new jsPDF("p", "mm", "a4");
+           const margin = 10;
+           const pageWidth = pdf.internal.pageSize.getWidth();
+           const pageHeight = pdf.internal.pageSize.getHeight();
+           const imageWidth = pageWidth - margin * 2;
+           const contentHeight = pageHeight - margin * 2;
+           const reportWidth = Math.ceil(report.getBoundingClientRect().width);
+           const modules = [...report.querySelectorAll(":scope > .module")];
+           const intro = [...report.querySelectorAll(":scope > .cover, :scope > .summary-grid")];
+           const footer = report.querySelector(":scope > .foot");
+           const blocks = [intro, ...modules.map((module) => [module]), ...(footer ? [[footer]] : [])];
+           let currentY = margin;
+           let pageHasContent = false;
+
+           const renderBlock = async (nodes) => {
+             const frame = document.createElement("div");
+             frame.className = "report pdf-export-block";
+             frame.style.cssText = `position:absolute;left:-100000px;top:0;width:${reportWidth}px;background:#fff;box-shadow:none;`;
+             nodes.forEach((node) => frame.appendChild(node.cloneNode(true)));
+             document.body.appendChild(frame);
+             try {
+               return await html2canvas(frame, {scale:2, backgroundColor:"#fff", useCORS:true});
+             } finally {
+               frame.remove();
+             }
+           };
+
+           const addBlock = async (nodes) => {
+             const canvas = await renderBlock(nodes);
+             const blockHeight = canvas.height * imageWidth / canvas.width;
+             if (blockHeight <= contentHeight) {
+               if (pageHasContent && currentY + blockHeight > pageHeight - margin) {
+                 pdf.addPage();
+                 currentY = margin;
+                 pageHasContent = false;
+               }
+               pdf.addImage(canvas, "PNG", margin, currentY, imageWidth, blockHeight);
+               currentY += blockHeight;
+               pageHasContent = true;
+               return;
+             }
+
+             if (pageHasContent) {
+               pdf.addPage();
+               currentY = margin;
+               pageHasContent = false;
+             }
+             const sliceHeight = Math.max(1, Math.floor(canvas.height * contentHeight / blockHeight));
+             let offset = 0;
+             let lastVisibleHeight = 0;
+             while (offset < canvas.height) {
+               const visibleHeight = Math.min(sliceHeight, canvas.height - offset);
+               pdf.addImage(canvas, "PNG", margin, margin - offset * imageWidth / canvas.width, imageWidth, blockHeight);
+               offset += visibleHeight;
+               lastVisibleHeight = visibleHeight;
+               if (offset < canvas.height) pdf.addPage();
+             }
+             currentY = margin + lastVisibleHeight * imageWidth / canvas.width;
+             pageHasContent = true;
+           };
+
+           for (const block of blocks) await addBlock(block);
+           pdf.save("obshchiy-otchet-proekta-" + new Date().toISOString().slice(0, 10) + ".pdf");
+           status.textContent = "PDF сохранён";
+         } catch (e) {
+           console.error(e);
+           status.textContent = "ошибка PDF";
+           alert("Не удалось сформировать общий отчёт PDF.");
+         } finally {
+           btn.disabled = false;
+         }
+       }
       $("#pdfBtn").addEventListener("click", exportPdf); load().catch((e) => { console.error(e); status.textContent = "ошибка загрузки"; report.innerHTML = `<div class="empty">Не удалось загрузить данные модулей.</div>`; });
     })();
   </script>
