@@ -12,7 +12,7 @@
 <style>.module-tabs{display:flex;flex-wrap:wrap;gap:10px}.module-tabs a.active{color:var(--accent);font-weight:700}.module-tabs a.report-btn{background:#b3131b;color:#fff;border-color:#b3131b}</style></head>
 <body>
   <main class="wrap">
-    <nav class="nav module-tabs"><a href="road-progress.html">Прогресс укладки слоёв</a><a href="road-shoulders.html">Обочины</a><a href="road-barriers.html">Дорожные ограждения</a><a class="active" aria-current="page" href="lotki.html">Лотки</a><a class="report-btn" href="project-report.html">Общий отчёт PDF</a></nav>
+    <nav class="nav module-tabs"><a href="road-progress.html">Прогресс укладки слоёв</a><a href="road-shoulders.html">Обочины</a><a href="road-barriers.html">Дорожные ограждения</a><a class="active" aria-current="page" href="lotki.html">Лотки</a><a class="report-btn" href="#">Общий отчёт PDF</a></nav>
     <header class="hdr"><div><div class="eyebrow">Водосток · Пикетаж</div><h1>Лотки</h1></div><div class="meta">Общая выполненность<br><b id="overall">0%</b></div></header>
     <section class="panel">
       <h2>Добавить отрезок</h2>
@@ -111,5 +111,6 @@
       fetch('/api/lotki-data',{cache:'no-store'}).then(res=>res.json()).then(data=>{state=data&&Array.isArray(data.segments)?data:{segments:[]};render();$('status').textContent='готово';}).catch(()=>{$('status').textContent='не удалось загрузить данные';render();});
     })();
   </script>
+  <script src="project-report.js"></script>
 </body>
 </html>
