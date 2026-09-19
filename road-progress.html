@@ -1592,6 +1592,8 @@
         const UPDATE_STORAGE_KEY = "progressbars-last-seen-version";
         const DATA_FILE_NAME = "road-progress-data.json";
         let state = null;
+        let reportReadyResolve;
+        const reportReady = new Promise((resolve) => { reportReadyResolve = resolve; });
         let workspace = null;
         let openEditorId = null;
         let openBridgeEditorId = null;
@@ -3049,8 +3051,16 @@
           }
         });
 
+        window.__moduleSummaryReport = {
+          key: "progress",
+          ready: reportReady,
+          buildSummary: () => buildPdfReportElement("summary"),
+        };
         setStatus("загрузка…");
-        load().then(checkForUpdates);
+        load().then(() => {
+          reportReadyResolve();
+          return checkForUpdates();
+        });
         setInterval(checkForUpdates, 30 * 60 * 1000);
       })();
     </script>

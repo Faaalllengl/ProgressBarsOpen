@@ -26,6 +26,7 @@ BARriers_BACKUP_DIR = DIR / "road-barriers-backups"
 SHOULDERS_DATA_FILE = DIR / "road-shoulders-data.json"
 SHOULDERS_UNDO_FILE = DIR / "road-shoulders-undo.json"
 SHOULDERS_BACKUP_DIR = DIR / "road-shoulders-backups"
+SHOULDERS_DATA_VERSION = 3
 BACKUP_DIR = DIR / "backups"
 PORT = 8765
 MAX_BACKUPS = 50
@@ -146,7 +147,7 @@ def _ensure_module_data_files():
     """Create ignored module data files on a new or cleaned installation."""
     defaults = {
         SHOULDERS_DATA_FILE: {
-            "version": 2,
+            "version": SHOULDERS_DATA_VERSION,
             "activeProjectId": "shoulders_main",
             "projects": [{
                 "id": "shoulders_main",
@@ -183,6 +184,53 @@ def _ensure_module_data_files():
     for path, data in defaults.items():
         if not path.is_file():
             _write_json_file(path, data)
+
+
+def _migrate_shoulders_data():
+    """Upgrade saved shoulder data after a code update.
+
+    Shoulder segments used to contain a ``sides`` field.  The current module
+    treats every segment as one ordinary progress-bar segment, so remove the
+    obsolete fields from every project before the browser reads the file.
+    """
+    if not SHOULDERS_DATA_FILE.is_file():
+        return
+    try:
+        data = json.loads(SHOULDERS_DATA_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"Предупреждение: не удалось проверить формат данных обочин: {exc}")
+        return
+    if not isinstance(data, dict):
+        return
+
+    states = []
+    if isinstance(data.get("projects"), list):
+        states = [project.get("state") for project in data["projects"] if isinstance(project, dict)]
+    else:
+        states = [data]
+
+    changed = data.get("version") != SHOULDERS_DATA_VERSION
+    for state in states:
+        if not isinstance(state, dict) or not isinstance(state.get("layers"), list):
+            continue
+        for layer in state["layers"]:
+            if not isinstance(layer, dict) or not isinstance(layer.get("segments"), list):
+                continue
+            for segment in layer["segments"]:
+                if not isinstance(segment, dict):
+                    continue
+                if "sides" in segment:
+                    del segment["sides"]
+                    changed = True
+                if "completedSides" in segment:
+                    del segment["completedSides"]
+                    changed = True
+
+    if changed:
+        _backup_shoulders_current_data()
+        data["version"] = SHOULDERS_DATA_VERSION
+        _write_json_file(SHOULDERS_DATA_FILE, data)
+        print(f"Обновлён формат данных обочин: v{SHOULDERS_DATA_VERSION}")
 
 
 def _project_state(data):
@@ -262,11 +310,41 @@ def _validate_lotki(data):
             raise ValueError(f"лоток {index}: выберите левую и/или правую сторону")
         if not isinstance(segment.get("completed", False), bool):
             raise ValueError(f"лоток {index}: некорректный статус")
+        completed_sides = segment.get("completedSides")
+        if completed_sides is not None and (
+            not isinstance(completed_sides, list)
+            or not all(isinstance(side, str) for side in completed_sides)
+            or len(completed_sides) != len(set(completed_sides))
+            or not all(side in sides for side in completed_sides)
+        ):
+            raise ValueError(f"лоток {index}: некорректный статус по сторонам")
 
 
 def _lotki_length(segment):
     base_length = max(0.0, float(segment["end"]) - float(segment["start"])) * 100
     return base_length * max(1, len(segment.get("sides", [])))
+
+
+def _lotki_completed_sides(segment):
+    sides = segment.get("sides", [])
+    completed_sides = segment.get("completedSides")
+    if completed_sides is None:
+        return sides if segment.get("completed") else []
+    return [side for side in sides if side in completed_sides]
+
+
+def _lotki_done_length(segment):
+    base_length = max(0.0, float(segment["end"]) - float(segment["start"])) * 100
+    return base_length * len(_lotki_completed_sides(segment))
+
+
+def _lotki_status(segment):
+    sides = segment.get("sides", [])
+    completed = _lotki_completed_sides(segment)
+    if len(sides) == 1:
+        return "Выполнен" if sides[0] in completed else "Не выполнен"
+    labels = {"left": "Слева", "right": "Справа"}
+    return "; ".join(f"{labels[side]}: {'выполнено' if side in completed else 'не выполнено'}" for side in sides)
 
 
 def _lotki_export_excel(data):
@@ -275,7 +353,7 @@ def _lotki_export_excel(data):
     summary.title = "Сводка"
     segments = data.get("segments", [])
     total = sum(_lotki_length(item) for item in segments)
-    done = sum(_lotki_length(item) for item in segments if item.get("completed"))
+    done = sum(_lotki_done_length(item) for item in segments)
     percent = done / total * 100 if total else 0
     summary.append(["Показатель", "Значение"])
     summary.append(["Модуль", "Лотки"])
@@ -290,7 +368,7 @@ def _lotki_export_excel(data):
         if "left" in item.get("sides", []): sides.append("Слева")
         if "right" in item.get("sides", []): sides.append("Справа")
         length = _lotki_length(item)
-        sheet.append([index, item["startText"], item["endText"], ", ".join(sides), length, round(length * 100), "Выполнен" if item.get("completed") else "Не выполнен"])
+        sheet.append([index, item["startText"], item["endText"], ", ".join(sides), length, round(length * 100), _lotki_status(item)])
     for sheet_item in workbook.worksheets:
         sheet_item.freeze_panes = "A2"
         sheet_item.auto_filter.ref = sheet_item.dimensions
@@ -305,7 +383,7 @@ def _lotki_export_excel(data):
 def _lotki_export_word(data):
     segments = data.get("segments", [])
     total = sum(_lotki_length(item) for item in segments)
-    done = sum(_lotki_length(item) for item in segments if item.get("completed"))
+    done = sum(_lotki_done_length(item) for item in segments)
     percent = done / total * 100 if total else 0
     document = Document()
     section = document.sections[0]
@@ -322,7 +400,7 @@ def _lotki_export_word(data):
     for index, item in enumerate(segments, 1):
         sides = ", ".join((["Слева"] if "left" in item.get("sides", []) else []) + (["Справа"] if "right" in item.get("sides", []) else []))
         length = _lotki_length(item)
-        values = [index, item["startText"], item["endText"], sides, f"{length:.2f}", f"{length * 100:.0f}", "Выполнен" if item.get("completed") else "Не выполнен"]
+        values = [index, item["startText"], item["endText"], sides, f"{length:.2f}", f"{length * 100:.0f}", _lotki_status(item)]
         cells = table.add_row().cells
         for cell, value in zip(cells, values): cell.text = str(value)
     output = BytesIO()
@@ -1107,6 +1185,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 def main():
     _ensure_module_data_files()
+    _migrate_shoulders_data()
     url = f"http://127.0.0.1:{PORT}/road-progress.html"
     print("Прогресс укладки слоёв")
     print(f"  Страница: {url}")

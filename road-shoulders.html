@@ -902,19 +902,6 @@
         bottom: 0;
         z-index: 2;
       }
-      .pdf-report .pdf-shoulder-seg {
-        display: flex;
-        overflow: hidden;
-        background: transparent !important;
-      }
-      .pdf-report .pdf-shoulder-half {
-        width: 50%;
-        height: 100%;
-        background: repeating-linear-gradient(135deg, rgba(61, 126, 166, 0.35) 0 4px, rgba(61, 126, 166, 0.08) 4px 8px), #aeb6bf;
-      }
-      .pdf-report .pdf-shoulder-half.done {
-        background: var(--pdf-segment-color);
-      }
       .pdf-report .pdf-front-seg {
         position: absolute;
         top: 0;
@@ -1433,10 +1420,6 @@
       .module-tabs { display:flex; flex-wrap:wrap; gap:8px; }
       .module-tabs .active { border-color:var(--accent); color:var(--accent); }
       .module-tabs .report-btn { background:#b3131b; border-color:#b3131b; color:#fff; }
-      .shoulder-seg { display:flex; overflow:hidden; background:transparent !important; }
-      .shoulder-half { width:50%; height:100%; background:repeating-linear-gradient(135deg, rgba(255,255,255,.35) 0 4px, rgba(255,255,255,.08) 4px 8px), #68717c; }
-      .shoulder-half.done { background:var(--segment-color); }
-      .side-toggle { display:inline-flex; align-items:center; gap:4px; margin-left:8px; font-size:12px; white-space:nowrap; }
     </style>
   </head>
   <body>
@@ -1537,6 +1520,8 @@
         const UPDATE_STORAGE_KEY = "progressbars-last-seen-version";
         const DATA_FILE_NAME = "road-shoulders-data.json";
         let state = null;
+        let reportReadyResolve;
+        const reportReady = new Promise((resolve) => { reportReadyResolve = resolve; });
         let workspace = null;
         let openEditorId = null;
         let openBridgeEditorId = null;
@@ -1574,15 +1559,9 @@
         }
         function layerCovered(layer) {
           return layer.segments.reduce(
-            (sum, seg) => sum + Math.max(0, seg.e - seg.s) * segmentCompletion(seg),
+            (sum, seg) => sum + Math.max(0, seg.e - seg.s),
             0,
           );
-        }
-        function segmentSides(seg) {
-          return Array.isArray(seg.sides) ? seg.sides.filter((side) => side === "left" || side === "right") : [];
-        }
-        function segmentCompletion(seg) {
-          return segmentSides(seg).length / 2;
         }
         function bridgeOverlapLength(seg) {
           return Math.max(0, Math.min(seg.e, BRIDGE_END) - Math.max(seg.s, BRIDGE_START));
@@ -1595,9 +1574,8 @@
             .map((seg) => ({
               s: Math.max(start, Number(seg.s)),
               e: Math.min(end, Number(seg.e)),
-              sides: segmentSides(seg),
             }))
-            .filter((seg) => Number.isFinite(seg.s) && Number.isFinite(seg.e) && seg.e > seg.s && segmentCompletion(seg) > 0)
+            .filter((seg) => Number.isFinite(seg.s) && Number.isFinite(seg.e) && seg.e > seg.s)
             .sort((a, b) => a.s - b.s);
           return intervals.reduce((merged, seg) => {
             const last = merged[merged.length - 1];
@@ -1820,9 +1798,7 @@
           state.layers.forEach((layer) => {
             layer.segments = Array.isArray(layer.segments) ? layer.segments : [];
             layer.segments.forEach((segment) => {
-              segment.sides = Array.isArray(segment.sides)
-                ? segment.sides.filter((side) => side === "left" || side === "right")
-                : [];
+              delete segment.sides;
             });
             if (!Number.isFinite(layer.excludedPk)) {
               layer.excludedPk =
@@ -1843,13 +1819,13 @@
             const activeProjectId = projects.some((project) => project.id === data.activeProjectId)
               ? data.activeProjectId
               : projects[0].id;
-            return { version: 2, activeProjectId, projects };
+            return { version: 3, activeProjectId, projects };
           }
           const project = normalizeProject(
             { id: "project_main", name: "Основной объект", state: isValidState(data) ? data : defaultState(), journal: [] },
             "project_main",
           );
-          return { version: 2, activeProjectId: project.id, projects: [project] };
+          return { version: 3, activeProjectId: project.id, projects: [project] };
         }
         function selectActiveProject() {
           const project = workspace.projects.find((p) => p.id === workspace.activeProjectId) || workspace.projects[0];
@@ -2153,10 +2129,8 @@
                   0.15,
                   Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0),
                 );
-                const sides = segmentSides(seg);
-                const sideLabel = sides.length === 2 ? "слева и справа" : sides.length === 1 ? `только ${sides[0] === "left" ? "слева" : "справа"}` : "сторона не выбрана";
-                return `<div class="seg shoulder-seg" title="${fmt(seg.s)} — ${fmt(seg.e)} ПК (${fmtKm(seg.e - seg.s)} км, ${sideLabel})"
-                style="left:${left}%;width:${width}%;--segment-color:${layer.color}"><span class="shoulder-half ${sides.includes("left") ? "done" : ""}"></span><span class="shoulder-half ${sides.includes("right") ? "done" : ""}"></span></div>`;
+                return `<div class="seg" title="${fmt(seg.s)} — ${fmt(seg.e)} ПК (${fmtKm(seg.e - seg.s)} км)"
+                style="left:${left}%;width:${width}%;background:${layer.color}"></div>`;
               })
               .join("")}
           </div>
@@ -2195,8 +2169,6 @@
           <span class="arrow">→</span>
           <input type="number" inputmode="decimal" step="0.01" value="${seg.e}" data-layer="${layer.id}" data-idx="${idx}" data-field="e" title="Конец участка">
           <span class="len">${fmt(seg.e - seg.s)} ПК · ${metersLabel(seg.e - seg.s)}</span>
-          <label class="side-toggle"><input type="checkbox" data-side="left" ${segmentSides(seg).includes("left") ? "checked" : ""}> слева</label>
-          <label class="side-toggle"><input type="checkbox" data-side="right" ${segmentSides(seg).includes("right") ? "checked" : ""}> справа</label>
           <button class="del-btn" data-del-layer="${layer.id}" data-del-idx="${idx}" title="Удалить этот участок">✕</button>
         </div>
       `,
@@ -2228,8 +2200,6 @@
         <input type="number" inputmode="decimal" step="0.01" placeholder="до" style="width:78px" id="new-e-${layer.id}" title="Конец нового участка">
         <input type="text" placeholder="ответственный" style="width:110px" id="new-person-${layer.id}" title="Кто выполнил участок">
         <input type="text" placeholder="качество / акт" style="width:120px" id="new-quality-${layer.id}" title="Краткая отметка о качестве или акте">
-        <label class="side-toggle"><input type="checkbox" id="new-left-${layer.id}"> слева</label>
-        <label class="side-toggle"><input type="checkbox" id="new-right-${layer.id}"> справа</label>
         <button class="add-btn" data-add-layer="${layer.id}" title="Добавить участок в этот слой">+ участок</button>
         <button class="del-btn" data-del-full-layer="${layer.id}" style="margin-left:auto" title="Удалить весь слой">удалить слой</button>
       </div>
@@ -2252,19 +2222,6 @@
                 commitLayer(layer, before, "Изменён участок слоя", { segmentBefore: beforeSegment, segmentAfter: { ...seg } });
               });
             });
-          layersEl.querySelectorAll(".editor input[data-side]").forEach((inp) => inp.addEventListener("change", () => {
-            const layer = state.layers.find((l) => l.id === inp.closest(".editor").dataset.layerId);
-            const row = inp.closest(".seg-row");
-            const segmentInputs = row.querySelectorAll("input[data-field]");
-            const seg = layer.segments[parseInt(segmentInputs[0].dataset.idx)];
-            const before = JSON.parse(JSON.stringify(seg));
-            const sides = new Set(segmentSides(seg));
-            if (inp.checked) sides.add(inp.dataset.side); else sides.delete(inp.dataset.side);
-            seg.sides = [...sides];
-            journal("Изменены стороны участка", `Слой: ${layer.name}, участок: ${segmentLabel(seg)}, стороны: ${seg.sides.length ? seg.sides.join(" и ") : "не выбраны"}`, { layer: layer.name, before, after: JSON.parse(JSON.stringify(seg)) });
-            renderLayers();
-            scheduleSave();
-          }));
           layersEl.querySelectorAll("[data-plan-layer]").forEach((inp) => inp.addEventListener("change", () => {
             const layer = state.layers.find((l) => l.id === inp.dataset.planLayer);
             const before = layer.planPercent || 0;
@@ -2350,12 +2307,8 @@
               }
               const layer = state.layers.find((l) => l.id === id);
               const before = JSON.parse(JSON.stringify(layer.segments));
-              const sides = [];
-              if ($("#new-left-" + id).checked) sides.push("left");
-              if ($("#new-right-" + id).checked) sides.push("right");
-              if (!sides.length) { alert("Выберите сторону: слева, справа или обе."); return; }
-              layer.segments.push({ s, e, sides, status: "Выполнено", responsible: $("#new-person-" + id).value.trim(), quality: $("#new-quality-" + id).value.trim(), date: new Date().toLocaleDateString("ru-RU") });
-              commitLayer(layer, before, "Добавлен участок слоя", { segmentAfter: { s, e, sides } });
+              layer.segments.push({ s, e, status: "Выполнено", responsible: $("#new-person-" + id).value.trim(), quality: $("#new-quality-" + id).value.trim(), date: new Date().toLocaleDateString("ru-RU") });
+              commitLayer(layer, before, "Добавлен участок слоя", { segmentAfter: { s, e } });
             });
           });
         }
@@ -2638,8 +2591,7 @@
                   0.15,
                   Math.min(100 - left, length > 0 ? ((seg.e - seg.s) / length) * 100 : 0),
                 );
-                const sides = segmentSides(seg);
-                return `<div class="pdf-seg pdf-shoulder-seg" style="left:${left}%;width:${width}%;--pdf-segment-color:${layer.color}" title="${fmtReportPk(seg.s)}–${fmtReportPk(seg.e)} ПК, ${sides.length === 2 ? "слева и справа" : sides.includes("left") ? "слева" : sides.includes("right") ? "справа" : "сторона не выбрана"}"><span class="pdf-shoulder-half ${sides.includes("left") ? "done" : ""}"></span><span class="pdf-shoulder-half ${sides.includes("right") ? "done" : ""}"></span></div>`;
+                return `<div class="pdf-seg" style="left:${left}%;width:${width}%;background:${layer.color}" title="${fmtReportPk(seg.s)}–${fmtReportPk(seg.e)} ПК"></div>`;
               })
               .join("");
             chartHtml += `
@@ -2656,11 +2608,7 @@
               const segList =
                 sortedSegments(layer)
                   .map(
-                    (seg) => {
-                      const sides = segmentSides(seg);
-                      const sideLabel = sides.length === 2 ? "слева и справа" : sides.includes("left") ? "слева" : sides.includes("right") ? "справа" : "сторона не выбрана";
-                      return `${fmtReportPk(seg.s)}–${fmtReportPk(seg.e)} (${fmtKm(Math.max(0, seg.e - seg.s - bridgeOverlapLength(seg)))} км, ${sideLabel})`;
-                    },
+                    (seg) => `${fmtReportPk(seg.s)}–${fmtReportPk(seg.e)} (${fmtKm(Math.max(0, seg.e - seg.s - bridgeOverlapLength(seg)))} км)`,
                   )
                   .join("; ") || "—";
               return `<tr>
@@ -3036,8 +2984,16 @@
           }
         });
 
+        window.__moduleSummaryReport = {
+          key: "shoulders",
+          ready: reportReady,
+          buildSummary: () => buildPdfReportElement("summary"),
+        };
         setStatus("загрузка…");
-        load().then(checkForUpdates);
+        load().then(() => {
+          reportReadyResolve();
+          return checkForUpdates();
+        });
         setInterval(checkForUpdates, 30 * 60 * 1000);
       })();
     </script>
